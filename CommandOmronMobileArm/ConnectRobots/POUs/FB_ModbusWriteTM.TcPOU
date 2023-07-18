@@ -1,0 +1,255 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.11">
+  <POU Name="FB_ModbusWriteTM" Id="{8cc2f5f6-f87d-4261-8dd2-091085de715f}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_ModbusWriteTM
+VAR_INPUT
+	stReferenceTM : ST_RobotArmObjectTM;
+END_VAR
+VAR_OUTPUT
+END_VAR
+VAR
+	arrTemp : ARRAY [0..1] OF WORD;
+	i : int;
+
+	
+	//Modbus variables - FC:6 Write Single Register 
+	fbWrite6 			: FB_MBWriteSingleReg;
+	bStart6 			: BOOL;
+	nValue6				: WORD; // command ID
+	bBusy6				: BOOL;
+	bError6				: BOOL;
+	nErrId6				: UDINT;
+	
+
+	//Modbus Variables - FC:16 Write Registers
+	fbWrite16			: FB_MBWriteRegs;
+	bStart16 			: BOOL;
+	arrWriteCommands 	: ARRAY [0..11] OF WORD;
+	nQuantity			: WORD := INT_TO_WORD(SIZEOF(arrWriteCommands)/2);
+	nMBAddr16			: WORD;
+	bBusy16				: BOOL;
+	bError16			: BOOL;
+	nErrId16			: UDINT;
+	
+	//General TM5 Modbus Variables
+	sIPAddr				: STRING(15) := GCL_ModbusTcp.cIPAddr;
+	nTCPPort			: UINT := GCL_ModbusTcp.cTCPPort;
+	nUnitID				: BYTE := GCL_ModbusTcp.cUnitID;
+
+	
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[
+
+(*---------------Prepare Data to be Sent---------------*)
+CASE stReferenceTM.cmdID OF 
+	RobotHome:  
+		nValue6 := 2#0000000000000000; // 0
+		nMBAddr16 := 16#23F1; //9201
+	MoveCartesianPTP: 
+		nValue6 := 2#0000000000000001; // 1
+		nMBAddr16 := 16#23F1; //9201
+	MoveCartesianLine: 
+		nValue6 := 2#0000000000000010; // 2
+		nMBAddr16 := 16#23F1; //9201
+	SetJointPositions: 
+		nValue6 := 2#0000000000000011; // 3
+		nMBAddr16 := 16#23FD; //9213
+//	SetJointSpeeds:
+//		nValue := 2#0000000000000011; // 3
+//		nMBAddr := 16#1B59;
+//	GripON:
+//		nValue := 2#0000000000000100; // 4
+//		nMBAddr := 16#1B59;
+//	GripOFF:
+//		nValue := 2#0000000000000101; // 5
+//		nMBAddr := 16#1B59;	
+END_CASE
+
+
+IF nValue6 = 1 OR nValue6 = 2 THEN
+	MEMCPY(ADR(arrTemp), ADR(stReferenceTM.fX), 4); //xPos
+	arrWriteCommands[0] := arrTemp[1];
+	arrWriteCommands[1] := arrTemp[0];
+	MEMCPY(ADR(arrTemp), ADR(stReferenceTM.fY), 4); //yPos
+	arrWriteCommands[2] := arrTemp[1];
+	arrWriteCommands[3] := arrTemp[0];
+	MEMCPY(ADR(arrTemp), ADR(stReferenceTM.fZ), 4); //zPos
+	arrWriteCommands[4] := arrTemp[1];
+	arrWriteCommands[5] := arrTemp[0];
+	MEMCPY(ADR(arrTemp), ADR(stReferenceTM.fRX), 4); //xRot
+	arrWriteCommands[6] := arrTemp[1];
+	arrWriteCommands[7] := arrTemp[0];
+	MEMCPY(ADR(arrTemp), ADR(stReferenceTM.fRY), 4); //yRot
+	arrWriteCommands[8] := arrTemp[1];
+	arrWriteCommands[9] := arrTemp[0];
+	MEMCPY(ADR(arrTemp), ADR(stReferenceTM.fRZ), 4); //zRot
+	arrWriteCommands[10] := arrTemp[1];
+	arrWriteCommands[11] := arrTemp[0];
+ELSE
+	MEMCPY(ADR(arrTemp), ADR(stReferenceTM.fTheta1), 4); // joint 1
+	arrWriteCommands[0] := arrTemp[1];
+	arrWriteCommands[1] := arrTemp[0];
+	MEMCPY(ADR(arrTemp), ADR(stReferenceTM.fTheta2), 4); // joint 2
+	arrWriteCommands[2] := arrTemp[1];
+	arrWriteCommands[3] := arrTemp[0];
+	MEMCPY(ADR(arrTemp), ADR(stReferenceTM.fTheta3), 4); // joint 3
+	arrWriteCommands[4] := arrTemp[1];
+	arrWriteCommands[5] := arrTemp[0];
+	MEMCPY(ADR(arrTemp), ADR(stReferenceTM.fTheta4), 4); // joint 4
+	arrWriteCommands[6] := arrTemp[1];
+	arrWriteCommands[7] := arrTemp[0];
+	MEMCPY(ADR(arrTemp), ADR(stReferenceTM.fTheta5), 4); // joint 5
+	arrWriteCommands[8] := arrTemp[1];
+	arrWriteCommands[9] := arrTemp[0];
+	MEMCPY(ADR(arrTemp), ADR(stReferenceTM.fTheta6), 4); // joint 6
+	arrWriteCommands[10] := arrTemp[1];
+	arrWriteCommands[11] := arrTemp[0];
+END_IF
+(*---------------END OF Prepare Data to be Sent---------------*)
+
+(*---------------Modbus function 6 - WriteSingleReg---------------*)
+FOR i:=1 TO 2 DO
+	IF NOT bstart6 THEN	
+		bStart6 := TRUE;
+		fbWrite6.bExecute := TRUE;
+	ELSE
+		IF NOT fbWrite6.bBUSY THEN
+			bStart6 := FALSE;
+		END_IF
+		fbWrite6.bExecute := FALSE;
+	END_IF
+	fbWrite6(sIPAddr:= sIPAddr, nTCPPort:= nTCPPort, nUnitID:= nUnitID, nMBAddr:= 16#23F0, nValue:=nValue6,
+			tTimeout:= T#1S, bBusy=>bBusy6, bError=> bError6, nErrId=> nErrId6 );
+	fbWrite6(bExecute:=FALSE);
+	bStart6 := FALSE;
+END_FOR
+(*---------------END OF Modbus function 6 - WriteSingleReg---------------*)
+	
+(*---------------Modbus function 16 - WriteRegs---------------*)
+FOR i:=1 TO 2 DO;
+	IF NOT bStart16 THEN
+		bStart16 := TRUE;
+		fbWrite16.bExecute := TRUE;
+	ELSE
+		IF NOT fbWrite16.bBusy THEN
+			bStart16 := FALSE;
+		END_IF
+		fbWrite16.bExecute := FALSE;
+	END_IF
+	
+	fbWrite16(sIPAddr:= sIPAddr, nTCPPort:= nTCPPort, nUnitID:= nUnitID, nQuantity:= nQuantity, nMBAddr:= nMBAddr16, cbLength:= SIZEOF(arrWriteCommands) , 
+			pSrcAddr:= ADR(arrWriteCommands), bExecute:= bStart16 , tTimeout:= T#1S, bBusy=>bBusy16, bError=> bError16, nErrId=> nErrId16 );
+	fbWrite16(bExecute := FALSE);
+	bStart16 := FALSE;
+END_FOR
+(*---------------END OF Modbus function 16 - WriteRegs---------------*)]]></ST>
+    </Implementation>
+    <Method Name="writeSingleCoil" Id="{61bf8526-5a01-46aa-ade2-2934f012d399}">
+      <Declaration><![CDATA[METHOD writeSingleCoil : BOOL
+VAR_INPUT
+	nMBAddr5			: WORD;
+END_VAR
+VAR
+	i: INT;
+	//Modbus variables - FC:5 Write Single Coil
+	fbWrite5 			: FB_MBWriteSingleCoil;
+	bStart5 			: BOOL;
+	nValue5				: WORD;
+	bBusy5				: BOOL;
+	bError5				: BOOL;
+	nErrId5				: UDINT;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[(*---------------Prepare Data to be Sent---------------*)
+nValue5 := 16#FF00; //Switch On (Trigger) 
+(*---------------END OF Prepare Data to be Sent---------------*)
+
+(*---------------Modbus function 5 - WriteSingleCoil---------------*)
+FOR i:=1 TO 2 DO
+	IF NOT bstart5 THEN	
+		bStart5 := TRUE;
+		fbWrite5.bExecute := TRUE;
+	ELSE
+		IF NOT fbWrite5.bBUSY THEN
+			bStart5 := FALSE;
+		END_IF
+		fbWrite5.bExecute := FALSE;
+	END_IF
+	fbWrite5(sIPAddr:= sIPAddr, nTCPPort:= nTCPPort, nUnitID:= nUnitID, nMBAddr:= nMBAddr5, nValue:=nValue5,
+			tTimeout:= T#1S, bBusy=>bBusy5, bError=> bError5, nErrId=> nErrId5 );
+	fbWrite5(bExecute:=FALSE);
+	bStart5 := FALSE;
+END_FOR
+(*---------------END OF Modbus function 5 - WriteSingleCoil---------------*)]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="writeSingleRegister" Id="{7ac5983f-1932-46f0-a8e3-cab9423ee513}">
+      <Declaration><![CDATA[METHOD writeSingleRegister : BOOL
+VAR_INPUT
+	nMBAddr6 : WORD;
+	nValue6	 : WORD;
+END_VAR
+VAR
+	i : INT;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[(*---------------Prepare Data to be Sent---------------*)
+
+(*---------------END OF Prepare Data to be Sent---------------*)
+
+
+(*---------------Modbus function 6 - WriteSingleReg---------------*)
+FOR i:=1 TO 2 DO
+	IF NOT bstart6 THEN	
+		bStart6 := TRUE;
+		fbWrite6.bExecute := TRUE;
+	ELSE
+		IF NOT fbWrite6.bBUSY THEN
+			bStart6 := FALSE;
+		END_IF
+		fbWrite6.bExecute := FALSE;
+	END_IF
+	fbWrite6(sIPAddr:= sIPAddr, nTCPPort:= nTCPPort, nUnitID:= nUnitID, nMBAddr:= nMBAddr6, nValue:=nValue6,
+			tTimeout:= T#1S, bBusy=>bBusy6, bError=> bError6, nErrId=> nErrId6 );
+	fbWrite6(bExecute:=FALSE);
+	bStart6 := FALSE;
+END_FOR
+(*---------------END OF Modbus function 6 - WriteSingleReg---------------*)]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_ModbusWriteTM">
+      <LineId Id="479" Count="1" />
+      <LineId Id="351" Count="67" />
+      <LineId Id="481" Count="0" />
+      <LineId Id="419" Count="12" />
+      <LineId Id="482" Count="0" />
+      <LineId Id="432" Count="3" />
+      <LineId Id="483" Count="0" />
+      <LineId Id="436" Count="12" />
+      <LineId Id="485" Count="0" />
+      <LineId Id="54" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_ModbusWriteTM.writeSingleCoil">
+      <LineId Id="7" Count="0" />
+      <LineId Id="37" Count="0" />
+      <LineId Id="19" Count="2" />
+      <LineId Id="38" Count="0" />
+      <LineId Id="22" Count="12" />
+      <LineId Id="40" Count="0" />
+      <LineId Id="18" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_ModbusWriteTM.writeSingleRegister">
+      <LineId Id="27" Count="1" />
+      <LineId Id="6" Count="0" />
+      <LineId Id="26" Count="0" />
+      <LineId Id="11" Count="1" />
+      <LineId Id="30" Count="0" />
+      <LineId Id="13" Count="12" />
+      <LineId Id="31" Count="0" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

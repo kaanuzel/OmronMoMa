@@ -1,0 +1,41 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.11">
+  <GVL Name="GVL_MobileManipulator" Id="{d0a22671-0953-45c7-b5d6-9e717f6bd0a9}">
+    <Declaration><![CDATA[{attribute 'qualified_only'}
+VAR_GLOBAL
+	
+	(*--------------- Omron TM5 Manipulator Parameters  ---------------*)
+	{attribute 'OPC.UA.DA' := '1'}
+	bStartTM	: BOOL;
+	{attribute 'OPC.UA.DA' := '1'}
+	bStopTM		: BOOL;
+	
+	
+	bCmdMoveRelPTP : BOOL;
+	bCmdSetJointsPTP : BOOL;
+	
+	{attribute 'OPC.UA.DA' := '1'}
+	stRobotArmObjectTM : ST_RobotArmObjectTM;
+	
+	
+
+	
+	
+	
+	(*--------------- Omron LD-90 Mobile Robot Parameters  ---------------*)
+	{attribute 'OPC.UA.DA' := '1'}
+	bStartLD 	: BOOL;
+	{attribute 'OPC.UA.DA' := '1'}
+	bStopLD		: BOOL;
+	
+	statusReceivedLD 	: STRING(7680):= '';
+	statusWriteLD 		: T_MaxString; 
+	
+	{attribute 'OPC.UA.DA' := '1'}
+	stMobileRobotObjectLD : ST_MobileRobotObjectLD;
+
+ 
+
+END_VAR]]></Declaration>
+  </GVL>
+</TcPlcObject>

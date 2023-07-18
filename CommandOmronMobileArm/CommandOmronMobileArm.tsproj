@@ -1,0 +1,45 @@
+<?xml version="1.0"?>
+<TcSmProject xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://www.beckhoff.com/schemas/2012/07/TcSmProject" TcSmVersion="1.0" TcVersion="3.1.4024.32">
+	<Project ProjectGUID="{9CE7A7B2-86EE-40D4-91BF-65C59A4DDAA1}" Target64Bit="true" ShowHideConfigurations="#x106">
+		<System>
+			<Settings MaxCpus="8" NonWinCpus="1">
+				<Cpu CpuId="7"/>
+			</Settings>
+			<Licenses>
+				<Target>
+					<ManualSelect>{BDCC0070-42D5-49AE-ABF1-1D4434813D60}</ManualSelect>
+					<ManualSelect>{3EBB9639-5FF3-42B6-8847-35C70DC013C8}</ManualSelect>
+					<ManualSelect>{6952449D-F68C-49A2-ADE4-8639D85B33A4}</ManualSelect>
+					<ManualSelect>{A1AF8A04-C08D-4853-A5A0-0E6C3A278A8C}</ManualSelect>
+				</Target>
+			</Licenses>
+			<Tasks>
+				<Task Id="3" Priority="20" CycleTime="100000" AmsPort="350" AdtTasks="true">
+					<Name>PlcTask</Name>
+				</Task>
+			</Tasks>
+		</System>
+		<Plc>
+			<Project GUID="{21D71558-1040-4B44-8CF2-964C4818FC72}" Name="ConnectRobots" PrjFilePath="ConnectRobots\ConnectRobots.plcproj" TmcFilePath="ConnectRobots\ConnectRobots.tmc" ReloadTmc="true" AmsPort="851" FileArchiveSettings="#x000e" CopyTmcToTarget="true" CopyTpyToTarget="false" SymbolicMapping="true">
+				<Instance Id="#x08502000" TcSmClass="TComPlcObjDef" KeepUnrestoredLinks="2" TmcPath="ConnectRobots\ConnectRobots.tmc" TmcHash="{95204692-31CE-7DCD-1159-B4AE566B73C4}">
+					<Name>ConnectRobots Instance</Name>
+					<CLSID ClassFactory="TcPlc30">{08500001-0000-0000-F000-000000000064}</CLSID>
+					<Contexts>
+						<Context>
+							<Id NeedCalleeCall="true">0</Id>
+							<Name>PlcTask</Name>
+							<ManualConfig>
+								<OTCID>#x02010030</OTCID>
+							</ManualConfig>
+							<Priority>20</Priority>
+							<CycleTime>10000000</CycleTime>
+						</Context>
+					</Contexts>
+					<TaskPouOids>
+						<TaskPouOid Prio="20" OTCID="#x08502001"/>
+					</TaskPouOids>
+				</Instance>
+			</Project>
+		</Plc>
+	</Project>
+</TcSmProject>

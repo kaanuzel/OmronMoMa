@@ -1,0 +1,273 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.11">
+  <POU Name="FB_HandleSetTM" Id="{6d8cf4ea-1acf-46ca-b535-92c6f38dbe51}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_HandleSetTM
+VAR_INPUT
+END_VAR
+VAR_OUTPUT
+END_VAR
+VAR
+	i : INT;
+	//stRobotArmObjectTM : ST_RobotArmObjectTM;
+	
+	//Initialize function block
+	fbModbusWriteTM : FB_ModbusWriteTM;
+	
+	//reference object from command window
+	stRobotArmReferenceTM : ST_RobotArmObjectTM;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[
+
+(*--------------- Allow access from command window if requested---------------*)
+IF GVL_CommandWindow.bCmdMoveRelPTP OR GVL_CommandWindow.bCmdMoveRelLinear THEN
+	IF GVL_CommandWindow.bCmdMoveRelPTP THEN
+		GVL_CommandWindow.bCmdMoveRelPTP := FALSE;
+		stRobotArmReferenceTM.cmdID := 1;
+	END_IF
+	IF GVL_CommandWindow.bCmdMoveRelLinear THEN
+		GVL_CommandWindow.bCmdMoveRelLinear := FALSE;
+		stRobotArmReferenceTM.cmdID := 2;
+	END_IF
+	
+	stRobotArmReferenceTM.fX := GVL_CommandWindow.fX_Ref;
+	stRobotArmReferenceTM.fY := GVL_CommandWindow.fY_Ref;
+	stRobotArmReferenceTM.fZ := GVL_CommandWindow.fZ_Ref;
+	stRobotArmReferenceTM.fRX := GVL_CommandWindow.fRX_Ref;
+	stRobotArmReferenceTM.fRY := GVL_CommandWindow.fRY_Ref;
+	stRobotArmReferenceTM.fRZ := GVL_CommandWindow.fRZ_Ref;
+	FOR i:= 1 TO 2 DO
+		fbModbusWriteTM(stReferenceTM := stRobotArmReferenceTM);
+	END_FOR
+END_IF
+
+IF GVL_CommandWindow.bCmdSetJointsPTP THEN
+	GVL_CommandWindow.bCmdSetJointsPTP := FALSE;
+	stRobotArmReferenceTM.cmdID := 3;
+	stRobotArmReferenceTM.fTheta1 := GVL_CommandWindow.fTheta1_Ref;
+	stRobotArmReferenceTM.fTheta2 := GVL_CommandWindow.fTheta2_Ref;
+	stRobotArmReferenceTM.fTheta3 := GVL_CommandWindow.fTheta3_Ref;
+	stRobotArmReferenceTM.fTheta4 := GVL_CommandWindow.fTheta4_Ref;
+	stRobotArmReferenceTM.fTheta5 := GVL_CommandWindow.fTheta5_Ref;
+	stRobotArmReferenceTM.fTheta6 := GVL_CommandWindow.fTheta6_Ref;
+	fbModbusWriteTM(stReferenceTM := stRobotArmReferenceTM);
+END_IF
+
+
+(*--------------- TO DO: Return the answer for class methods, external access---------------*)
+
+
+
+
+
+
+
+
+]]></ST>
+    </Implementation>
+    <Method Name="buttonPlayPause" Id="{0fedbe4b-817f-49bd-bcf7-b0a7ac625d6d}">
+      <Declaration><![CDATA[METHOD buttonPlayPause : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[fbModbusWriteTM.writeSingleCoil(nMBAddr5 := 16#1BC0); //starting modbus client with address 7104 (Play/Pause)
+
+buttonPlayPause := FALSE;  //indicates that the job of the function is finished]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="buttonStickMinus" Id="{627e8ccf-c2b5-417c-b2da-31683aa34a91}">
+      <Declaration><![CDATA[METHOD buttonStickMinus : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+fbModbusWriteTM.writeSingleCoil(nMBAddr5 := 16#1BC3); //starting modbus client with address 7107 (Stick-)
+
+buttonStickMinus := FALSE;  //indicates that the job of the function is finished]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="buttonStickPlus" Id="{46972a74-bd48-4ddf-adb9-be2a88cf47a9}">
+      <Declaration><![CDATA[METHOD buttonStickPlus : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+fbModbusWriteTM.writeSingleCoil(nMBAddr5 := 16#1BC2); //starting modbus client with address 7106 (Stick+)
+
+buttonStickPlus := FALSE;  //indicates that the job of the function is finished]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="buttonStop" Id="{4e0cff95-923f-496e-b0e3-f244047f9ca3}">
+      <Declaration><![CDATA[METHOD buttonStop : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+
+fbModbusWriteTM.writeSingleCoil(nMBAddr5 := 16#1BC1); //starting modbus client with address 7105 (Stop)
+
+buttonStop := FALSE; //indicates that the job of the function is finished]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="changeProjectSpeed" Id="{d41e2b6e-6959-4a9e-9589-66782e19b713}">
+      <Declaration><![CDATA[METHOD changeProjectSpeed : BOOL
+VAR_INPUT
+	projectSpeed : INT;
+END_VAR
+VAR
+	nValueInt : WORD;
+	remainder : INT;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[IF projectSpeed < 5 THEN
+	projectSpeed := 5; //min 5%
+ELSIF projectSpeed > 100 THEN
+	projectSpeed := 100; //max 10%
+END_IF
+
+remainder := projectSpeed MOD 5;
+projectSpeed := projectSpeed - remainder; //only multiples of 5 
+nValueInt := INT_TO_WORD(projectSpeed);
+
+
+fbModbusWriteTM.writeSingleRegister(nMBAddr6 := 16#1BBD,nValue6 := nValueInt); //starting modbus client with address 7101 (Change Project Speed)
+
+changeProjectSpeed := FALSE;  //indicates that the job of the function is finished]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="moveRelativePTP" Id="{e2a554b0-9f24-461f-9c7f-794ba012d46f}">
+      <Declaration><![CDATA[METHOD moveRelativePTP : BOOL
+VAR_INPUT
+	fX : REAL := 0; 
+	fY : REAL := 0; 
+	fZ : REAL := 0; 
+	fRX : REAL := 0; 
+	fRY : REAL := 0; 
+	fRZ : REAL := 0; 
+END_VAR
+VAR
+	stRobotArmRefTM : ST_RobotArmObjectTM;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[stRobotArmRefTM.cmdID := MoveCartesianPTP;
+stRobotArmRefTM.fX := fX;
+stRobotArmRefTM.fY := fY;
+stRobotArmRefTM.fZ := fZ;
+stRobotArmRefTM.fRX := fRX;
+stRobotArmRefTM.fRY := fRY;
+stRobotArmRefTM.fRZ := fRZ;
+
+fbModbusWriteTM(stReferenceTM := stRobotArmRefTM); //start Modbus TCP Client 
+
+moveRelativePTP := FALSE;  //indicates that the job of the function is finishedon]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="setJointsPTP" Id="{32648ada-ec4b-420a-8735-46fe963d6e5e}">
+      <Declaration><![CDATA[METHOD setJointsPTP : BOOL
+VAR_INPUT
+	fTheta1 : REAL := 0;
+	fTheta2 : REAL := 0;
+	fTheta3 : REAL := 0;
+	fTheta4 : REAL := 0;
+	fTheta5 : REAL := 0;
+	fTheta6 : REAL := 0;
+END_VAR
+VAR
+	stRobotArmRefTM : ST_RobotArmObjectTM;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[stRobotArmRefTM.cmdID := SetJointPositions;
+stRobotArmRefTM.fTheta1 := fTheta1;
+stRobotArmRefTM.fTheta2 := fTheta2;
+stRobotArmRefTM.fTheta3 := fTheta3;
+stRobotArmRefTM.fTheta4 := fTheta4;
+stRobotArmRefTM.fTheta5 := fTheta5;
+stRobotArmRefTM.fTheta6 := fTheta6;
+
+fbModbusWriteTM(stReferenceTM:= stRobotArmRefTM); //start Modbus TCP Client 
+
+setJointsPTP := FALSE;  //indicates that the job of the function is finished]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_HandleSetTM">
+      <LineId Id="11" Count="0" />
+      <LineId Id="16" Count="1" />
+      <LineId Id="34" Count="0" />
+      <LineId Id="136" Count="0" />
+      <LineId Id="139" Count="0" />
+      <LineId Id="143" Count="0" />
+      <LineId Id="138" Count="0" />
+      <LineId Id="140" Count="1" />
+      <LineId Id="144" Count="0" />
+      <LineId Id="142" Count="0" />
+      <LineId Id="55" Count="3" />
+      <LineId Id="60" Count="1" />
+      <LineId Id="59" Count="0" />
+      <LineId Id="130" Count="0" />
+      <LineId Id="135" Count="0" />
+      <LineId Id="134" Count="0" />
+      <LineId Id="39" Count="0" />
+      <LineId Id="63" Count="0" />
+      <LineId Id="62" Count="0" />
+      <LineId Id="64" Count="0" />
+      <LineId Id="115" Count="0" />
+      <LineId Id="69" Count="5" />
+      <LineId Id="66" Count="0" />
+      <LineId Id="65" Count="0" />
+      <LineId Id="76" Count="0" />
+      <LineId Id="75" Count="0" />
+      <LineId Id="18" Count="0" />
+      <LineId Id="79" Count="0" />
+      <LineId Id="33" Count="0" />
+      <LineId Id="19" Count="0" />
+      <LineId Id="31" Count="0" />
+      <LineId Id="21" Count="3" />
+      <LineId Id="9" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_HandleSetTM.buttonPlayPause">
+      <LineId Id="9" Count="1" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_HandleSetTM.buttonStickMinus">
+      <LineId Id="6" Count="2" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_HandleSetTM.buttonStickPlus">
+      <LineId Id="6" Count="2" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_HandleSetTM.buttonStop">
+      <LineId Id="8" Count="1" />
+      <LineId Id="6" Count="1" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_HandleSetTM.changeProjectSpeed">
+      <LineId Id="11" Count="0" />
+      <LineId Id="19" Count="0" />
+      <LineId Id="21" Count="1" />
+      <LineId Id="20" Count="0" />
+      <LineId Id="12" Count="1" />
+      <LineId Id="17" Count="0" />
+      <LineId Id="14" Count="0" />
+      <LineId Id="7" Count="3" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_HandleSetTM.moveRelativePTP">
+      <LineId Id="6" Count="5" />
+      <LineId Id="5" Count="0" />
+      <LineId Id="14" Count="1" />
+      <LineId Id="13" Count="0" />
+      <LineId Id="12" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_HandleSetTM.setJointsPTP">
+      <LineId Id="6" Count="9" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

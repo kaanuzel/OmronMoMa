@@ -1,0 +1,179 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.11">
+  <POU Name="FB_ReadRobotTM" Id="{ad450a00-d234-4bc8-a293-ffb24ad40d5f}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_ReadRobotTM
+VAR_INPUT
+	//Requires No input
+END_VAR
+VAR_OUTPUT
+	fX : REAL; 
+	fY : REAL; 
+	fZ : REAL; 
+	fRX : REAL; 
+	fRY : REAL; 
+	fRZ : REAL; 
+	
+	fTheta1 : REAL;
+	fTheta2 : REAL;
+	fTheta3 : REAL;
+	fTheta4 : REAL;
+	fTheta5 : REAL;
+	fTheta6 : REAL;
+	
+END_VAR
+VAR
+	arrTemp : ARRAY [0..1] OF WORD;
+	
+	//Modbus Variables
+	fbRead1				: FB_MBReadCoils;
+	fbRead4				: FB_MBReadInputRegs ;
+	bStart1				: BOOL;
+	bStart4				: BOOL;
+	arrReadCommands 	: ARRAY [0..23] OF WORD;
+	nQuantity			: WORD := INT_TO_WORD(SIZEOF(arrReadCommands)/2);
+	nMBAddr				: WORD; 
+	
+	bBusy1				: BOOL;
+	bError1				: BOOL;
+	nErrId1				: UDINT;
+	bBusy4				: BOOL;
+	bError4				: BOOL;
+	nErrId4				: UDINT;
+	cbRead1				: UDINT;
+	cbRead4				: UDINT;
+	
+	sIPAddr				: STRING(15) := GCL_ModbusTcp.cIPAddr;
+	nTCPPort			: UINT := GCL_ModbusTcp.cTCPPort;
+	nUnitID				: BYTE := GCL_ModbusTcp.cUnitID;
+
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[ 	
+//Modbus address to read for "Cartesian coordinates w.r.t current Base without tool" & "Joints"
+nMBAddr := 16#1B59; //7001    --> goes up to 7024
+
+IF NOT bstart4 THEN	
+	bStart4 := TRUE;
+	fbRead4.bExecute := TRUE;
+ELSE
+	IF NOT fbRead4.bBUSY THEN
+		bStart4 := FALSE;
+	END_IF
+	fbRead4.bExecute := FALSE;
+END_IF
+fbRead4(sIPAddr:= sIPAddr, nTCPPort:= nTCPPort, nUnitID:= nUnitID, nQuantity:= nQuantity, nMBAddr:= nMBAddr, cbLength:= SIZEOF(arrReadCommands) , 
+	pDestAddr:= ADR(arrReadCommands), bExecute:= bStart4 , tTimeout:= T#1S, bBusy=>bBusy4, bError=> bError4, nErrId=> nErrId4, cbRead=> cbRead4 );
+	
+
+// Array Data Read with function code 4 
+arrTemp[1] := arrReadCommands[0];
+arrTemp[0] := arrReadCommands[1];
+MEMCPY(ADR(fX), ADR(arrTemp), 4);  //xPos
+
+arrTemp[1] := arrReadCommands[2];
+arrTemp[0] := arrReadCommands[3];
+MEMCPY(ADR(fY), ADR(arrTemp), 4);  //yPos
+
+arrTemp[1] := arrReadCommands[4];
+arrTemp[0] := arrReadCommands[5];
+MEMCPY(ADR(fZ), ADR(arrTemp), 4);  //zPos
+
+arrTemp[1] := arrReadCommands[6];
+arrTemp[0] := arrReadCommands[7];
+MEMCPY(ADR(fRX), ADR(arrTemp), 4);  //xRot
+
+arrTemp[1] := arrReadCommands[8];
+arrTemp[0] := arrReadCommands[9];
+MEMCPY(ADR(fRY), ADR(arrTemp), 4);  //yRot
+
+arrTemp[1] := arrReadCommands[10];
+arrTemp[0] := arrReadCommands[11];
+MEMCPY(ADR(fRZ), ADR(arrTemp), 4);  //zRot
+
+arrTemp[1] := arrReadCommands[12];
+arrTemp[0] := arrReadCommands[13];
+MEMCPY(ADR(fTheta1), ADR(arrTemp), 4);  // joint 1
+
+arrTemp[1] := arrReadCommands[14];
+arrTemp[0] := arrReadCommands[15];
+MEMCPY(ADR(fTheta2), ADR(arrTemp), 4);  // joint 2
+
+arrTemp[1] := arrReadCommands[16];
+arrTemp[0] := arrReadCommands[17];
+MEMCPY(ADR(fTheta3), ADR(arrTemp), 4);  // joint 3
+
+arrTemp[1] := arrReadCommands[18];
+arrTemp[0] := arrReadCommands[19];
+MEMCPY(ADR(fTheta4), ADR(arrTemp), 4);  // joint 4
+
+arrTemp[1] := arrReadCommands[20];
+arrTemp[0] := arrReadCommands[21];
+MEMCPY(ADR(fTheta5), ADR(arrTemp), 4);  // joint 5
+
+arrTemp[1] := arrReadCommands[22];
+arrTemp[0] := arrReadCommands[23];
+MEMCPY(ADR(fTheta6), ADR(arrTemp), 4);  // joint 6
+
+
+
+//Set the data to global variables so it is accessible from everywhere
+GVL_CommandWindow.fX_Current := fX;
+GVL_CommandWindow.fY_Current := fY;
+GVL_CommandWindow.fZ_Current := fZ;
+GVL_CommandWindow.fRX_Current := fRX;
+GVL_CommandWindow.fRY_Current := fRY;
+GVL_CommandWindow.fRZ_Current := fRZ;
+GVL_CommandWindow.fTheta1_Current := fTheta1;
+GVL_CommandWindow.fTheta2_Current := fTheta2;
+GVL_CommandWindow.fTheta3_Current := fTheta3;
+GVL_CommandWindow.fTheta4_Current := fTheta4;
+GVL_CommandWindow.fTheta5_Current := fTheta5;
+GVL_CommandWindow.fTheta6_Current := fTheta6;
+
+]]></ST>
+    </Implementation>
+    <LineIds Name="FB_ReadRobotTM">
+      <LineId Id="177" Count="0" />
+      <LineId Id="265" Count="0" />
+      <LineId Id="263" Count="0" />
+      <LineId Id="267" Count="8" />
+      <LineId Id="262" Count="0" />
+      <LineId Id="178" Count="4" />
+      <LineId Id="206" Count="0" />
+      <LineId Id="210" Count="0" />
+      <LineId Id="322" Count="0" />
+      <LineId Id="207" Count="0" />
+      <LineId Id="212" Count="1" />
+      <LineId Id="323" Count="0" />
+      <LineId Id="215" Count="2" />
+      <LineId Id="324" Count="0" />
+      <LineId Id="205" Count="0" />
+      <LineId Id="218" Count="1" />
+      <LineId Id="325" Count="0" />
+      <LineId Id="221" Count="2" />
+      <LineId Id="326" Count="0" />
+      <LineId Id="225" Count="2" />
+      <LineId Id="327" Count="0" />
+      <LineId Id="239" Count="2" />
+      <LineId Id="328" Count="0" />
+      <LineId Id="243" Count="2" />
+      <LineId Id="329" Count="0" />
+      <LineId Id="247" Count="2" />
+      <LineId Id="330" Count="0" />
+      <LineId Id="251" Count="2" />
+      <LineId Id="331" Count="0" />
+      <LineId Id="255" Count="2" />
+      <LineId Id="332" Count="0" />
+      <LineId Id="259" Count="2" />
+      <LineId Id="334" Count="0" />
+      <LineId Id="336" Count="1" />
+      <LineId Id="335" Count="0" />
+      <LineId Id="339" Count="6" />
+      <LineId Id="347" Count="4" />
+      <LineId Id="338" Count="0" />
+      <LineId Id="333" Count="0" />
+      <LineId Id="266" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,289 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.11">
+  <POU Name="FB_SetRobotTM" Id="{634abb87-82fc-4c2c-a846-4f9fa090629c}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_SetRobotTM
+VAR_INPUT
+	cmdID : E_CommandEventTM;
+	fX : REAL := 0; 
+	fY : REAL := 0; 
+	fZ : REAL := 0; 
+	fRX : REAL := 0; 
+	fRY : REAL := 0; 
+	fRZ : REAL := 0; 
+	
+	fTheta1 : REAL := 0;
+	fTheta2 : REAL := 0;
+	fTheta3 : REAL := 0;
+	fTheta4 : REAL := 0;
+	fTheta5 : REAL := 0;
+	fTheta6 : REAL := 0;
+END_VAR
+VAR_OUTPUT
+END_VAR
+VAR	
+	arrTemp : ARRAY [0..1] OF WORD;
+	eSetState : E_RobotStateTM := READY;
+	
+	//Modbus variables
+    fbWrite16			: FB_MBWriteRegs;
+	fbWrite6 			: FB_MBWriteSingleReg;
+	bStart6 			: BOOL;
+	bStart16 			: BOOL;
+	arrWriteCommands 	: ARRAY [0..11] OF WORD;
+	nQuantity			: WORD := INT_TO_WORD(SIZEOF(arrWriteCommands)/2);
+	nMBAddr				: WORD; 
+	bBusy6				: BOOL;
+	bError6				: BOOL;
+	nErrId6				: UDINT;
+	bBusy16				: BOOL;
+	bError16			: BOOL;
+	nErrId16			: UDINT;
+	sIPAddr				: STRING(15) := GCL_ModbusTcp.cIPAddr;
+	nTCPPort			: UINT := GCL_ModbusTcp.cTCPPort;
+	nUnitID				: BYTE := GCL_ModbusTcp.cUnitID;
+	nValue				: WORD;
+END_VAR
+
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[
+CASE eSetState OF
+	READY:
+		IF fbWrite6.bBusy THEN
+			RETURN;
+		END_IF
+		eSetState := PREPARE;
+		
+	PREPARE:
+		CASE cmdID OF 
+			RobotHome: Home();
+			MoveCartesianPTP: MoveRelPTP();
+			SetJointPositions: SetJoints();
+				
+			SetJointSpeeds:
+				nValue := 2#0000000000000011; // 3
+				nMBAddr := 16#1B59;
+			GripON:
+				nValue := 2#0000000000000100; // 4
+				nMBAddr := 16#1B59;
+			GripOFF:
+				nValue := 2#0000000000000101; // 5
+				nMBAddr := 16#1B59;
+				
+		END_CASE
+		eSetState := SEND;
+		
+	SEND:
+		IF NOT bstart6 THEN	
+			bStart6 := TRUE;
+			fbWrite6.bExecute := TRUE;
+		ELSE
+			IF NOT fbWrite6.bBUSY THEN
+				bStart6 := FALSE;
+			END_IF
+			fbWrite6.bExecute := FALSE;
+		END_IF
+		fbWrite6(sIPAddr:= sIPAddr, nTCPPort:= nTCPPort, nUnitID:= nUnitID, nMBAddr:= 16#23F0, nValue:=nValue,
+				tTimeout:= T#1S, bBusy=>bBusy6, bError=> bError6, nErrId=> nErrId6 );
+			
+		IF NOT bStart16 THEN
+			bStart16 := TRUE;
+			fbWrite16.bExecute := TRUE;
+		ELSE
+			IF NOT fbWrite16.bBusy THEN
+				bStart16 := FALSE;
+			END_IF
+			fbWrite16.bExecute := FALSE;
+		END_IF
+		
+		fbWrite16(sIPAddr:= sIPAddr, nTCPPort:= nTCPPort, nUnitID:= nUnitID, nQuantity:= nQuantity, nMBAddr:= nMBAddr, cbLength:= SIZEOF(arrWriteCommands) , 
+				pSrcAddr:= ADR(arrWriteCommands), bExecute:= bStart16 , tTimeout:= T#1S, bBusy=>bBusy16, bError=> bError16, nErrId=> nErrId16 );
+		
+		eSetState := READY;		
+	
+		
+END_CASE
+
+
+	
+	
+
+]]></ST>
+    </Implementation>
+    <Method Name="Home" Id="{845fdaf6-43f5-47d2-a9d1-62cdb2425f69}">
+      <Declaration><![CDATA[METHOD Home : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+//prepare the data to be sent 
+nValue := 2#0000000000000000; // 0
+nMBAddr := 16#23F1; //9201]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="MoveRelPTP" Id="{b2e16968-d0b3-4e43-a8fe-54226ace325e}">
+      <Declaration><![CDATA[METHOD MoveRelPTP : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// prepare
+
+// e.g. next state := MoveRelPTP
+
+//prepare the next state
+eSetState := Send;
+
+//prepare the data to be sent 
+nValue := 2#0000000000000001; // 1
+nMBAddr := 16#23F1; //9201
+
+MEMCPY(ADR(arrTemp), ADR(fX), 4); //xPos
+arrWriteCommands[0] := arrTemp[1];
+arrWriteCommands[1] := arrTemp[0];
+
+MEMCPY(ADR(arrTemp), ADR(fY), 4); //yPos
+arrWriteCommands[2] := arrTemp[1];
+arrWriteCommands[3] := arrTemp[0];
+
+MEMCPY(ADR(arrTemp), ADR(fZ), 4); //zPos
+arrWriteCommands[4] := arrTemp[1];
+arrWriteCommands[5] := arrTemp[0];
+
+MEMCPY(ADR(arrTemp), ADR(fRX), 4); //xRot
+arrWriteCommands[6] := arrTemp[1];
+arrWriteCommands[7] := arrTemp[0];
+
+MEMCPY(ADR(arrTemp), ADR(fRY), 4); //yRot
+arrWriteCommands[8] := arrTemp[1];
+arrWriteCommands[9] := arrTemp[0];
+
+MEMCPY(ADR(arrTemp), ADR(fRZ), 4); //zRot
+arrWriteCommands[10] := arrTemp[1];
+arrWriteCommands[11] := arrTemp[0];
+
+
+
+
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="SetJoints" Id="{4d06ccc0-5e3f-4f8e-9775-089a6f900979}">
+      <Declaration><![CDATA[METHOD SetJoints : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[//prepare data to be sent 
+nValue := 2#0000000000000010; // 2
+nMBAddr := 16#23FC; //9212
+
+
+MEMCPY(ADR(arrTemp), ADR(fTheta1), 4); // joint 1
+arrWriteCommands[0] := arrTemp[1];
+arrWriteCommands[1] := arrTemp[0];
+
+MEMCPY(ADR(arrTemp), ADR(fTheta2), 4); // joint 2
+arrWriteCommands[2] := arrTemp[1];
+arrWriteCommands[3] := arrTemp[0];
+
+MEMCPY(ADR(arrTemp), ADR(fTheta3), 4); // joint 3
+arrWriteCommands[4] := arrTemp[1];
+arrWriteCommands[5] := arrTemp[0];
+
+MEMCPY(ADR(arrTemp), ADR(fTheta4), 4); // joint 4
+arrWriteCommands[6] := arrTemp[1];
+arrWriteCommands[7] := arrTemp[0];
+
+MEMCPY(ADR(arrTemp), ADR(fTheta5), 4); // joint 5
+arrWriteCommands[8] := arrTemp[1];
+arrWriteCommands[9] := arrTemp[0];
+
+MEMCPY(ADR(arrTemp), ADR(fTheta6), 4); // joint 6
+arrWriteCommands[10] := arrTemp[1];
+arrWriteCommands[11] := arrTemp[0];
+]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_SetRobotTM">
+      <LineId Id="668" Count="0" />
+      <LineId Id="586" Count="0" />
+      <LineId Id="669" Count="0" />
+      <LineId Id="672" Count="0" />
+      <LineId Id="674" Count="1" />
+      <LineId Id="739" Count="0" />
+      <LineId Id="754" Count="0" />
+      <LineId Id="676" Count="0" />
+      <LineId Id="681" Count="0" />
+      <LineId Id="736" Count="0" />
+      <LineId Id="701" Count="0" />
+      <LineId Id="743" Count="1" />
+      <LineId Id="746" Count="7" />
+      <LineId Id="742" Count="0" />
+      <LineId Id="703" Count="0" />
+      <LineId Id="702" Count="0" />
+      <LineId Id="740" Count="0" />
+      <LineId Id="680" Count="0" />
+      <LineId Id="677" Count="0" />
+      <LineId Id="707" Count="8" />
+      <LineId Id="717" Count="2" />
+      <LineId Id="721" Count="13" />
+      <LineId Id="679" Count="0" />
+      <LineId Id="756" Count="0" />
+      <LineId Id="670" Count="0" />
+      <LineId Id="587" Count="1" />
+      <LineId Id="611" Count="0" />
+      <LineId Id="664" Count="1" />
+      <LineId Id="48" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_SetRobotTM.Home">
+      <LineId Id="8" Count="2" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_SetRobotTM.MoveRelPTP">
+      <LineId Id="6" Count="1" />
+      <LineId Id="5" Count="0" />
+      <LineId Id="15" Count="0" />
+      <LineId Id="12" Count="0" />
+      <LineId Id="11" Count="0" />
+      <LineId Id="17" Count="0" />
+      <LineId Id="16" Count="0" />
+      <LineId Id="19" Count="0" />
+      <LineId Id="18" Count="0" />
+      <LineId Id="22" Count="0" />
+      <LineId Id="50" Count="0" />
+      <LineId Id="23" Count="1" />
+      <LineId Id="26" Count="0" />
+      <LineId Id="51" Count="0" />
+      <LineId Id="27" Count="1" />
+      <LineId Id="30" Count="0" />
+      <LineId Id="52" Count="0" />
+      <LineId Id="31" Count="1" />
+      <LineId Id="34" Count="0" />
+      <LineId Id="53" Count="0" />
+      <LineId Id="35" Count="1" />
+      <LineId Id="38" Count="0" />
+      <LineId Id="54" Count="0" />
+      <LineId Id="39" Count="1" />
+      <LineId Id="42" Count="0" />
+      <LineId Id="55" Count="0" />
+      <LineId Id="43" Count="0" />
+      <LineId Id="20" Count="0" />
+      <LineId Id="48" Count="1" />
+      <LineId Id="47" Count="0" />
+      <LineId Id="14" Count="0" />
+      <LineId Id="13" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_SetRobotTM.SetJoints">
+      <LineId Id="5" Count="0" />
+      <LineId Id="7" Count="0" />
+      <LineId Id="6" Count="0" />
+      <LineId Id="9" Count="1" />
+      <LineId Id="37" Count="0" />
+      <LineId Id="11" Count="20" />
+      <LineId Id="8" Count="0" />
+      <LineId Id="35" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

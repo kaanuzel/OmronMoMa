@@ -1,0 +1,123 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.11">
+  <POU Name="FB_MobileManipulator9DoF" Id="{e63c4280-8055-42c9-a78f-c5c2c7d41f3e}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_MobileManipulator9DoF
+VAR_INPUT
+END_VAR
+VAR_OUTPUT
+END_VAR
+VAR
+	//Initializing FuncBlock objects for LD-90 and TM5-700
+	fbHandleRobotLD : FB_HandleRobotLD;
+	fbHandleSetTM : FB_HandleSetTM;
+	fbHandleGetTM : FB_HandleGetTM;
+	
+	fbSetRobotTM 				: FB_SetRobotTM;	
+	fbReadRobotTM 			: FB_ReadRobotTM;
+	
+	
+	// Variables to call LD class functions 
+	{attribute 'OPC.UA.DA' := '1'}
+    bLDgetRobotIP : BOOL;
+	{attribute 'OPC.UA.DA' := '1'}
+	sRobotIP : STRING;
+	bLDgetTargetList : BOOL;
+	bLDgetHomePos : BOOl;
+	{attribute 'OPC.UA.DA' := '1'}
+	bLDshutdown : BOOL;
+	{attribute 'OPC.UA.DA' := '1'}
+	stLDmobileRobotObject : ST_MobileRobotObjectLD;
+	
+	//Variables to call TM class functions
+	{attribute 'OPC.UA.DA' := '1'}
+	bTMbuttonPlayPause : BOOL;
+	{attribute 'OPC.UA.DA' := '1'}
+	bTMbuttonStop 	 : BOOL;
+	{attribute 'OPC.UA.DA' := '1'}
+	bTMmoveRelativePTP : BOOL;
+	{attribute 'OPC.UA.DA' := '1'}
+	bTMsetJointsPTP : BOOL;
+	{attribute 'OPC.UA.DA' := '1'}
+	stTMrobotArmObject : ST_RobotArmObjectTM;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[(*--------------- Calling LD-90 handler & methods ---------------*)
+//handler
+fbHandleRobotLD();
+
+//method: getRobotIP 
+IF bLDgetRobotIP THEN
+	fbHandleRobotLD.getRobotIP(bDone=>bLDgetRobotIP); 
+	sRobotIP := fbHandleRobotLD.sGetRobotIP;
+END_IF	
+sRobotIP := fbHandleRobotLD.sGetRobotIP;
+
+//method: shutdown
+IF bLDshutdown THEN
+	fbHandleRobotLD.shutdown(bDone=>bLDshutdown);
+END_IF
+(*--------------- END OF Calling LD-90 handler & methods ---------------*)
+
+
+
+(*--------------- Calling TM5-700 handler & methods ---------------*)
+//set handler
+fbHandleSetTM();
+
+//get handler
+fbHandleGetTM();
+
+//IF GVL_CommandWindow.bCmdMoveRelPTP THEN
+//	fbSetRobotTM();
+//END_IF
+
+//method: buttonPlayPause
+IF bTMbuttonPlayPause THEN
+	bTMbuttonPlayPause := fbHandleSetTM.buttonPlayPause();
+END_IF
+
+//method: buttonStop
+IF bTMbuttonStop THEN
+	bTMbuttonStop := fbHandleSetTM.buttonStop();
+END_IF
+
+//method: moveRelativePTP
+IF bTMmoveRelativePTP THEN
+	bTMmoveRelativePTP := fbHandleSetTM.moveRelativePTP(stTMrobotArmObject.fX, stTMrobotArmObject.fY, stTMrobotArmObject.fZ, 
+								  stTMrobotArmObject.fRX, stTMrobotArmObject.fRY, stTMrobotArmObject.fRZ);
+END_IF
+
+//method: setJointPTP
+IF bTMsetJointsPTP THEN
+	bTMsetJointsPTP := fbHandleSetTM.setJointsPTP(stTMrobotArmObject.fTheta1, stTMrobotArmObject.fTheta2, stTMrobotArmObject.fTheta3,
+							   stTMrobotArmObject.fTheta4, stTMrobotArmObject.fTheta5, stTMrobotArmObject.fTheta6);
+END_IF
+
+(*--------------- END OF Calling TM5-700 handler & methods ---------------*)
+
+
+
+
+(*--------------- TO DO: Task Separator for Robots to NOT Move Simultaniously ---------------*)
+	
+//IF NOT bBusyTM THEN
+//	fbSetRobotTM.cmdID := GVL_CommandWindow.commandID;
+
+//END_IF
+
+
+//IF NOT bBusyLD THEN
+//	fbHandleMobileRobotData();
+//END_IF
+]]></ST>
+    </Implementation>
+    <LineIds Name="FB_MobileManipulator9DoF">
+      <LineId Id="1079" Count="15" />
+      <LineId Id="1224" Count="0" />
+      <LineId Id="1183" Count="0" />
+      <LineId Id="1096" Count="49" />
+      <LineId Id="29" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

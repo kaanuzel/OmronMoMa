@@ -1,0 +1,17 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.11">
+  <POU Name="MAIN" Id="{77c88e48-6fa6-483a-bf27-5177b3655b0b}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM MAIN
+VAR
+	fbMobileManipulator9DoF : FB_MobileManipulator9DoF;
+	
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[fbMobileManipulator9DoF();]]></ST>
+    </Implementation>
+    <LineIds Name="MAIN">
+      <LineId Id="10" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

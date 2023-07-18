@@ -1,0 +1,29 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.11">
+  <DUT Name="ST_RobotArmObjectTM" Id="{b88b19b8-2bce-4aae-b1ea-11ea14cf2dea}">
+    <Declaration><![CDATA[TYPE ST_RobotArmObjectTM :
+STRUCT
+	cmdID : E_CommandEventTM;
+
+	fX : REAL; 
+	fY : REAL; 
+	fZ : REAL; 
+	fRX : REAL; 
+	fRY : REAL; 
+	fRZ : REAL; 
+	
+	fTheta1 : REAL := 0;
+	fTheta2 : REAL := 0;
+	fTheta3 : REAL := 0;
+	fTheta4 : REAL := 0;
+	fTheta5 : REAL := 0;
+	fTheta6 : REAL := 0;
+	
+	bBusyTM 	: BOOL; //true if project running
+	bErrorTM	: BOOL; //true if there is an error
+	
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>
