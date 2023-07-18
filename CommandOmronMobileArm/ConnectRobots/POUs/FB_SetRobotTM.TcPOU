@@ -46,8 +46,7 @@ END_VAR
 
 ]]></Declaration>
     <Implementation>
-      <ST><![CDATA[
-CASE eSetState OF
+      <ST><![CDATA[CASE eSetState OF
 	READY:
 		IF fbWrite6.bBusy THEN
 			RETURN;
@@ -207,7 +206,6 @@ arrWriteCommands[11] := arrTemp[0];
       </Implementation>
     </Method>
     <LineIds Name="FB_SetRobotTM">
-      <LineId Id="668" Count="0" />
       <LineId Id="586" Count="0" />
       <LineId Id="669" Count="0" />
       <LineId Id="672" Count="0" />

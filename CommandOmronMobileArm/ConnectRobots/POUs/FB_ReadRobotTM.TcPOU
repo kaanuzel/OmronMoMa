@@ -49,8 +49,7 @@ VAR
 END_VAR
 ]]></Declaration>
     <Implementation>
-      <ST><![CDATA[ 	
-//Modbus address to read for "Cartesian coordinates w.r.t current Base without tool" & "Joints"
+      <ST><![CDATA[//Modbus address to read for "Cartesian coordinates w.r.t current Base without tool" & "Joints"
 nMBAddr := 16#1B59; //7001    --> goes up to 7024
 
 IF NOT bstart4 THEN	
@@ -134,7 +133,6 @@ GVL_CommandWindow.fTheta6_Current := fTheta6;
 ]]></ST>
     </Implementation>
     <LineIds Name="FB_ReadRobotTM">
-      <LineId Id="177" Count="0" />
       <LineId Id="265" Count="0" />
       <LineId Id="263" Count="0" />
       <LineId Id="267" Count="8" />

@@ -172,8 +172,8 @@ END_CASE
 ]]></ST>
     </Implementation>
     <LineIds Name="FB_SocketLD">
-      <LineId Id="450" Count="0" />
-      <LineId Id="39" Count="0" />
+      <LineId Id="1522" Count="0" />
+      <LineId Id="1521" Count="0" />
       <LineId Id="321" Count="8" />
       <LineId Id="443" Count="1" />
       <LineId Id="330" Count="20" />
