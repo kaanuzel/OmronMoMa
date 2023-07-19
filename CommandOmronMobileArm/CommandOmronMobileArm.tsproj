@@ -21,7 +21,7 @@
 		</System>
 		<Plc>
 			<Project GUID="{21D71558-1040-4B44-8CF2-964C4818FC72}" Name="ConnectRobots" PrjFilePath="ConnectRobots\ConnectRobots.plcproj" TmcFilePath="ConnectRobots\ConnectRobots.tmc" ReloadTmc="true" AmsPort="851" FileArchiveSettings="#x000e" CopyTmcToTarget="true" CopyTpyToTarget="false" SymbolicMapping="true">
-				<Instance Id="#x08502000" TcSmClass="TComPlcObjDef" KeepUnrestoredLinks="2" TmcPath="ConnectRobots\ConnectRobots.tmc" TmcHash="{95204692-31CE-7DCD-1159-B4AE566B73C4}">
+				<Instance Id="#x08502000" TcSmClass="TComPlcObjDef" KeepUnrestoredLinks="2" TmcPath="ConnectRobots\ConnectRobots.tmc" TmcHash="{B964301B-2FCB-F286-5B31-6F882E3B4239}">
 					<Name>ConnectRobots Instance</Name>
 					<CLSID ClassFactory="TcPlc30">{08500001-0000-0000-F000-000000000064}</CLSID>
 					<Contexts>

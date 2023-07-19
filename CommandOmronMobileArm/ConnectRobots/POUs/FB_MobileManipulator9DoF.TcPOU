@@ -7,13 +7,16 @@ END_VAR
 VAR_OUTPUT
 END_VAR
 VAR
+	
 	//Initializing FuncBlock objects for LD-90 and TM5-700
+	{attribute 'OPC.UA.DA':='1'}
 	fbHandleRobotLD : FB_HandleRobotLD;
+	{attribute 'OPC.UA.DA':='1'}
 	fbHandleSetTM : FB_HandleSetTM;
 	fbHandleGetTM : FB_HandleGetTM;
 	
-	fbSetRobotTM 				: FB_SetRobotTM;	
-	fbReadRobotTM 			: FB_ReadRobotTM;
+//	fbSetRobotTM 				: FB_SetRobotTM;	
+//	fbReadRobotTM 			: FB_ReadRobotTM;
 	
 	
 	// Variables to call LD class functions 
@@ -39,6 +42,9 @@ VAR
 	bTMsetJointsPTP : BOOL;
 	{attribute 'OPC.UA.DA' := '1'}
 	stTMrobotArmObject : ST_RobotArmObjectTM;
+	
+	//State Machine 
+	eState : E_MoMaStates;
 END_VAR
 ]]></Declaration>
     <Implementation>
@@ -101,22 +107,98 @@ END_IF
 
 (*--------------- TO DO: Task Separator for Robots to NOT Move Simultaniously ---------------*)
 	
-//IF NOT bBusyTM THEN
-//	fbSetRobotTM.cmdID := GVL_CommandWindow.commandID;
+CASE eState OF
+	Init:
+		IF GVL_MobileManipulator.stMobileRobotObjectLD.bErrorLD OR  GVL_MobileManipulator.stRobotArmObjectTM.bErrorTM THEN
+			eState := ServiceNeeded;	
+		END_IF
+	Prepare: 
+		//prepare queue for the task 
+		IF GVL_MobileManipulator.bStartTM THEN
+			eState := Moving_TM;
+		ELSIF GVL_MobileManipulator.bStartLD THEN
+			eState := Moving_LD;
+		END_IF
+		
+		//IF tasks are finished then
+			eState := Succeeded;
+		
+	Moving_TM:
+		GVL_MobileManipulator.bStopLD := TRUE; 
+		//do what task requires
+	
+	Moving_LD:
+		// move TM into embryo position 
+		GVL_MobileManipulator.bStopTM := TRUE; 
+		//do what task requires 
+	Succeeded:
+		eState := Init;
+	
+	Failed:
+		// REprepare !!!
+		eState := Prepare;
 
-//END_IF
+	ServiceNeeded:
+		GVL_MobileManipulator.bStopTM := TRUE;
+		GVL_MobileManipulator.bStopLD := TRUE;
+END_CASE
 
 
-//IF NOT bBusyLD THEN
-//	fbHandleMobileRobotData();
-//END_IF
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 ]]></ST>
     </Implementation>
     <LineIds Name="FB_MobileManipulator9DoF">
       <LineId Id="1079" Count="15" />
       <LineId Id="1224" Count="0" />
       <LineId Id="1183" Count="0" />
-      <LineId Id="1096" Count="49" />
+      <LineId Id="1096" Count="40" />
+      <LineId Id="1267" Count="0" />
+      <LineId Id="1274" Count="0" />
+      <LineId Id="1278" Count="0" />
+      <LineId Id="1283" Count="0" />
+      <LineId Id="1282" Count="0" />
+      <LineId Id="1279" Count="0" />
+      <LineId Id="1320" Count="0" />
+      <LineId Id="1280" Count="0" />
+      <LineId Id="1284" Count="0" />
+      <LineId Id="1287" Count="1" />
+      <LineId Id="1285" Count="0" />
+      <LineId Id="1324" Count="2" />
+      <LineId Id="1315" Count="0" />
+      <LineId Id="1286" Count="0" />
+      <LineId Id="1313" Count="0" />
+      <LineId Id="1319" Count="0" />
+      <LineId Id="1314" Count="0" />
+      <LineId Id="1310" Count="0" />
+      <LineId Id="1323" Count="0" />
+      <LineId Id="1311" Count="0" />
+      <LineId Id="1322" Count="0" />
+      <LineId Id="1312" Count="0" />
+      <LineId Id="1327" Count="0" />
+      <LineId Id="1316" Count="1" />
+      <LineId Id="1328" Count="0" />
+      <LineId Id="1318" Count="0" />
+      <LineId Id="1276" Count="1" />
+      <LineId Id="1290" Count="0" />
+      <LineId Id="1289" Count="0" />
+      <LineId Id="1275" Count="0" />
+      <LineId Id="1266" Count="0" />
+      <LineId Id="1291" Count="16" />
       <LineId Id="29" Count="0" />
     </LineIds>
   </POU>

@@ -125,7 +125,8 @@ END_IF
 ]]></ST>
     </Implementation>
     <Method Name="getRobotIP" Id="{26a78548-d92c-4780-adfb-e7b25572327e}">
-      <Declaration><![CDATA[METHOD getRobotIP : BOOL
+      <Declaration><![CDATA[{attribute 'TcRpcEnable':='1'}
+METHOD getRobotIP : BOOL
 VAR_INPUT
 	
 END_VAR
@@ -151,7 +152,8 @@ getRobotIP := TRUE; //function returns true after execution]]></ST>
       </Implementation>
     </Method>
     <Method Name="shutdown" Id="{9a75acf4-8ad8-45e2-8a57-a40dffd414a1}">
-      <Declaration><![CDATA[METHOD shutdown : BOOL
+      <Declaration><![CDATA[{attribute 'TcRpcEnable':='1'}
+METHOD shutdown : BOOL
 VAR_INPUT
 END_VAR
 

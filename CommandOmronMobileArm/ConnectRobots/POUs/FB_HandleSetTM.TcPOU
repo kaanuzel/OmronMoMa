@@ -67,7 +67,8 @@ END_IF
 ]]></ST>
     </Implementation>
     <Method Name="buttonPlayPause" Id="{0fedbe4b-817f-49bd-bcf7-b0a7ac625d6d}">
-      <Declaration><![CDATA[METHOD buttonPlayPause : BOOL
+      <Declaration><![CDATA[{attribute 'TcRpcEnable':='1'}
+METHOD buttonPlayPause : BOOL
 VAR_INPUT
 END_VAR
 ]]></Declaration>
@@ -78,7 +79,8 @@ buttonPlayPause := FALSE;  //indicates that the job of the function is finished]
       </Implementation>
     </Method>
     <Method Name="buttonStickMinus" Id="{627e8ccf-c2b5-417c-b2da-31683aa34a91}">
-      <Declaration><![CDATA[METHOD buttonStickMinus : BOOL
+      <Declaration><![CDATA[{attribute 'TcRpcEnable':='1'}
+METHOD buttonStickMinus : BOOL
 VAR_INPUT
 END_VAR
 ]]></Declaration>
@@ -90,7 +92,8 @@ buttonStickMinus := FALSE;  //indicates that the job of the function is finished
       </Implementation>
     </Method>
     <Method Name="buttonStickPlus" Id="{46972a74-bd48-4ddf-adb9-be2a88cf47a9}">
-      <Declaration><![CDATA[METHOD buttonStickPlus : BOOL
+      <Declaration><![CDATA[{attribute 'TcRpcEnable':='1'}
+METHOD buttonStickPlus : BOOL
 VAR_INPUT
 END_VAR
 ]]></Declaration>
@@ -102,7 +105,8 @@ buttonStickPlus := FALSE;  //indicates that the job of the function is finished]
       </Implementation>
     </Method>
     <Method Name="buttonStop" Id="{4e0cff95-923f-496e-b0e3-f244047f9ca3}">
-      <Declaration><![CDATA[METHOD buttonStop : BOOL
+      <Declaration><![CDATA[{attribute 'TcRpcEnable':='1'}
+METHOD buttonStop : BOOL
 VAR_INPUT
 END_VAR
 ]]></Declaration>
@@ -115,7 +119,8 @@ buttonStop := FALSE; //indicates that the job of the function is finished]]></ST
       </Implementation>
     </Method>
     <Method Name="changeProjectSpeed" Id="{d41e2b6e-6959-4a9e-9589-66782e19b713}">
-      <Declaration><![CDATA[METHOD changeProjectSpeed : BOOL
+      <Declaration><![CDATA[{attribute 'TcRpcEnable':='1'}
+METHOD changeProjectSpeed : BOOL
 VAR_INPUT
 	projectSpeed : INT;
 END_VAR
@@ -141,7 +146,8 @@ changeProjectSpeed := FALSE;  //indicates that the job of the function is finish
       </Implementation>
     </Method>
     <Method Name="moveRelativePTP" Id="{e2a554b0-9f24-461f-9c7f-794ba012d46f}">
-      <Declaration><![CDATA[METHOD moveRelativePTP : BOOL
+      <Declaration><![CDATA[{attribute 'TcRpcEnable':='1'}
+METHOD moveRelativePTP : BOOL
 VAR_INPUT
 	fX : REAL := 0; 
 	fY : REAL := 0; 
@@ -169,7 +175,8 @@ moveRelativePTP := FALSE;  //indicates that the job of the function is finishedo
       </Implementation>
     </Method>
     <Method Name="setJointsPTP" Id="{32648ada-ec4b-420a-8735-46fe963d6e5e}">
-      <Declaration><![CDATA[METHOD setJointsPTP : BOOL
+      <Declaration><![CDATA[{attribute 'TcRpcEnable':='1'}
+METHOD setJointsPTP : BOOL
 VAR_INPUT
 	fTheta1 : REAL := 0;
 	fTheta2 : REAL := 0;
