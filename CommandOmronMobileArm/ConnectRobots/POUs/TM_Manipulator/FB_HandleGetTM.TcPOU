@@ -1,7 +1,8 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.11">
   <POU Name="FB_HandleGetTM" Id="{7fe79f44-db81-4b13-93d2-126126fb875c}" SpecialFunc="None">
-    <Declaration><![CDATA[(* alskjd *)
+    <Declaration><![CDATA[(* This function block (FB) is resposible for handling the get method calls. It reads the manipulator's joint and 
+cartesian positions regularly and updates the robot status. *)
 FUNCTION_BLOCK FB_HandleGetTM
 VAR_INPUT
 END_VAR

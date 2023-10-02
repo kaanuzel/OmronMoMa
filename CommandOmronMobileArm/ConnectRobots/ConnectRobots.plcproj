@@ -16,24 +16,30 @@
     <Implicit_Jitter_Distribution>{7b7a6e96-0ea4-406e-a9b3-0aca032604d7}</Implicit_Jitter_Distribution>
     <LibraryReferences>{9377a369-3c2e-4130-a48f-33a593aa147b}</LibraryReferences>
     <Released>false</Released>
+    <Company>Hochschule Luzern</Company>
+    <Title>Mobile Manipulator Omron</Title>
+    <ProjectVersion>0.0.0.1</ProjectVersion>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="DUTs\E_CommandEventTM.TcDUT">
+    <Compile Include="ClassDiagramTrial.TcCD">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="DUTs\E_DataExchangeLD.TcDUT">
+    <Compile Include="DUTs\E_MoMa_2ndHierarchy_Implementation.TcDUT">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="DUTs\E_MoMaStates.TcDUT">
+    <Compile Include="DUTs\E_MoMa_1stHierarchy_States.TcDUT">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="DUTs\E_RobotStateTM.TcDUT">
+    <Compile Include="DUTs\LD_MobileRobot\E_DataExchangeLD.TcDUT">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="DUTs\ST_MobileRobotObjectLD.TcDUT">
+    <Compile Include="DUTs\LD_MobileRobot\ST_MobileRobotObjectLD.TcDUT">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="DUTs\ST_RobotArmObjectTM.TcDUT">
+    <Compile Include="DUTs\TM_Manipulator\E_CommandEventTM.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="DUTs\TM_Manipulator\ST_RobotArmObjectTM.TcDUT">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="GlobalTextList.TcGTLO">
@@ -58,37 +64,28 @@
     <Compile Include="PlcTask.TcTTO">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="POUs\FB_HandleGetTM.TcPOU">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="POUs\FB_HandleRobotLD.TcPOU">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="POUs\FB_HandleSetTM.TcPOU">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="POUs\FB_ModbusReadTM.TcPOU">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="POUs\FB_ModbusWriteTM.TcPOU">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="POUs\FB_SocketLD.TcPOU">
-      <SubType>Code</SubType>
-    </Compile>
     <Compile Include="POUs\FB_MobileManipulator9DoF.TcPOU">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="POUs\FB_ReadRobotTM.TcPOU">
+    <Compile Include="POUs\LD_MobileRobot\FB_HandleRobotLD.TcPOU">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="POUs\FB_ServerOpcUa.TcPOU">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="POUs\FB_SetRobotTM.TcPOU">
+    <Compile Include="POUs\LD_MobileRobot\FB_SocketLD.TcPOU">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="POUs\MAIN.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\TM_Manipulator\FB_HandleGetTM.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\TM_Manipulator\FB_HandleSetTM.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\TM_Manipulator\FB_ModbusReadTM.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\TM_Manipulator\FB_ModbusWriteTM.TcPOU">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="Visualization Manager.TcVMO">
@@ -101,7 +98,11 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="DUTs" />
+    <Folder Include="DUTs\LD_MobileRobot" />
+    <Folder Include="DUTs\TM_Manipulator" />
     <Folder Include="GVLs" />
+    <Folder Include="POUs\LD_MobileRobot" />
+    <Folder Include="POUs\TM_Manipulator" />
     <Folder Include="VISUs" />
     <Folder Include="POUs" />
   </ItemGroup>
@@ -168,6 +169,10 @@
       <DefaultResolution>Tc2_Utilities, * (Beckhoff Automation GmbH)</DefaultResolution>
       <Namespace>Tc2_Utilities</Namespace>
     </PlaceholderReference>
+    <PlaceholderReference Include="Tc3_EventLogger">
+      <DefaultResolution>Tc3_EventLogger, * (Beckhoff Automation GmbH)</DefaultResolution>
+      <Namespace>Tc3_EventLogger</Namespace>
+    </PlaceholderReference>
     <PlaceholderReference Include="Tc3_Module">
       <DefaultResolution>Tc3_Module, * (Beckhoff Automation GmbH)</DefaultResolution>
       <Namespace>Tc3_Module</Namespace>
@@ -183,6 +188,9 @@
     </None>
   </ItemGroup>
   <ItemGroup>
+    <LibraryReference Include="Mobile Manipulator Omron,0.0.0.1,Hochschule Luzern">
+      <Namespace>Mobile_Manipulator_Omron</Namespace>
+    </LibraryReference>
     <LibraryReference Include="Tc2_OpcUa,3.3.2.0,Beckhoff Automation GmbH">
       <Namespace>Tc2_OpcUa</Namespace>
     </LibraryReference>

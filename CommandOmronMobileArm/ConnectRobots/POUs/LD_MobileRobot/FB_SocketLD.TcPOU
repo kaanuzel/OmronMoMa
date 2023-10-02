@@ -1,9 +1,11 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.11">
   <POU Name="FB_SocketLD" Id="{7bd1ae85-f4f4-4c52-8385-83b6ac5bfb84}" SpecialFunc="None">
-    <Declaration><![CDATA[FUNCTION_BLOCK FB_SocketLD
+    <Declaration><![CDATA[//This function block creates a socket connection with the TCP/IP server of the mobile robot. It also handles the data exchange in terms of byte strings.
+FUNCTION_BLOCK FB_SocketLD
 VAR_INPUT
 	//sWriteData : STRING :='';
+	bStartWritingString : BOOL:=FALSE; //activated to send strings
 END_VAR
 VAR_OUTPUT
 	//sReceivedCommands : STRING;
@@ -49,7 +51,6 @@ VAR
 	i: INT;
 	j : INT;
 	k : INT;
-	m : INT;
 	arrTmp : ARRAY [0..255] OF BYTE;
 	sTmpMsg1 : STRING(255);
 	sTmpMsg : T_MaxString;
@@ -129,8 +130,8 @@ CASE eState OF
 					
 		
 		(*--------------- Set LD-90 String Command ---------------*)
-		IF GVL_MobileManipulator.bStartLD THEN
-			GVL_MobileManipulator.bStartLD := FALSE;
+		IF bStartWritingString THEN
+			bStartWritingString := FALSE;
 			MEMSET(ADR(arrDataReceive), 0 , SIZEOF(arrDataReceive)-1);
 			MEMSET(ADR(arrDataSend),16#00,SIZEOF(arrDataSend));
 			MEMSET(ADR(arrTmp),16#00,SIZEOF(arrTmp));
@@ -163,7 +164,7 @@ CASE eState OF
 		END_IF
 			
 	Succeed:
-		kaanReceivedBytes:= 5;//here we could allow the other robot to start moving 
+		kaanReceivedBytes:= 5;//here we could do sth
 	ERROR:
 		i := 2;//NOT GOOD, replace later
 END_CASE

@@ -9,49 +9,67 @@ VAR_OUTPUT
 	(*--------------- Class Method Returns---------------*)
 	
 	// GetRobotIP
-	sGetRobotIP : STRING(255);
+	{attribute 'OPC.UA.DA':='0'}
+	sGetRobotIP : STRING(255); //Returns the IP address of the robot upon request. 
 	
 
 END_VAR
 VAR
+	{attribute 'OPC.UA.DA':='0'}
 	sStringsReceivedLD 	: STRING(7680); //String Received from LD
+	{attribute 'OPC.UA.DA':='0'}
 	sStringsWriteLD 		: T_MaxString; //String to be sent to LD
 	
 	//variable to request status every 500ms;
+	{attribute 'OPC.UA.DA':='0'}
 	tiktak : TON;
+	{attribute 'OPC.UA.DA':='0'}
 	bRequestStatus : BOOL := FALSE;
 	
 	//Variable to set the password in the begining automatically 
+	{attribute 'OPC.UA.DA':='0'}
 	bSetPassword : BOOL := TRUE;
 	
 	//Variable to assign status values 
+	{attribute 'OPC.UA.DA':='0'}
 	sStatusReceivedLD : STRING(255);
+	{attribute 'OPC.UA.DA':='0'}
 	sLocation : STRING;
+	{attribute 'OPC.UA.DA':='0'}
 	sLocationYR : STRING;
 	
 	//FB to start TCP/IP Client 
+	{attribute 'OPC.UA.DA':='0'}
 	fbSocketLD : FB_SocketLD;
 	
 	//Variable for Command Window Access
+	{attribute 'OPC.UA.DA':='0'}
 	bCallingCommandWindow : BOOL;
 	
 	
 	//Calling class methods 
+	{attribute 'OPC.UA.DA':='0'}
 	bCallingMethods : BOOL; //If any method is called
+	{attribute 'OPC.UA.DA':='0'}
 	bGetRobotIP : BOOL;
-	
+	{attribute 'OPC.UA.DA':='0'}
 	smallString : STRING(255);
 END_VAR
 ]]></Declaration>
     <Implementation>
-      <ST><![CDATA[
-(*--------------- Return the answer for class methods, external access---------------*)
+      <ST><![CDATA[(*--------------- Return the answer for class methods, external access---------------*)
 
 smallString := GVL_MobileManipulator.statusReceivedLD;
 IF bCallingMethods THEN
 	IF LEFT(smallString,13) = 'Info: RobotIP' THEN // called: getRobotIP
 		sGetRobotIP := MID(smallString,12,15);
 		bCallingMethods := FALSE;
+	ELSIF LEFT(smallString,5) = 'Going' THEN // called: gotoPoint
+		GVL_MobileManipulator.stMobileRobotObjectLD.bBusyLD := TRUE;
+	ELSIF LEFT(smallString,7) = 'Arrived' THEN //finished: gotoPoint
+		bCallingMethods := FALSE;
+		GVL_MobileManipulator.stMobileRobotObjectLD.bBusyLD := FALSE;
+		
 	END_IF
 END_IF
 
@@ -61,8 +79,7 @@ bCallingCommandWindow := GVL_CommandWindow.bCmdWriteStringToLD90;
 IF bCallingCommandWindow THEN 
 	GVL_CommandWindow.bCmdWriteStringToLD90 := FALSE;
 	bCallingCommandWindow := FALSE;
-	GVL_MobileManipulator.stMobileRobotObjectLD.bBusyLD := TRUE;
-	GVL_MobileManipulator.bStartLD := TRUE;
+	fbSocketLD.bStartWritingString := TRUE;
 	GVL_MobileManipulator.statusWriteLD := GVL_CommandWindow.sWriteCommand;
 
 END_IF
@@ -72,7 +89,7 @@ END_IF
 IF tiktak.Q THEN
 	IF bRequestStatus THEN 
 		GVL_MobileManipulator.statusWriteLD := 'oneLineStatus'; 
-		GVL_MobileManipulator.bStartLD :=TRUE;
+		fbSocketLD.bStartWritingString :=TRUE;
 		
 		bRequestStatus := FALSE;
 	END_IF
@@ -81,7 +98,7 @@ ELSE
 	tiktak(IN:= TRUE,PT:=T#500MS);
 	IF NOT bRequestStatus AND NOT bCallingMethods AND NOT bCallingCommandWindow THEN
 		
-		GVL_MobileManipulator.bStartLD :=FALSE;
+		fbSocketLD.bStartWritingString :=FALSE;
 		bRequestStatus := TRUE;
 	END_IF
 END_IF
@@ -116,7 +133,7 @@ fbSocketLD();
 (*--------------- Enter the password for the remote server, only once in the beginning ---------------*)
 IF bSetPassword THEN
 	GVL_MobileManipulator.statusWriteLD := 'admin';
-	GVL_MobileManipulator.bStartLD :=TRUE;
+	fbSocketLD.bStartWritingString :=TRUE;
 	bSetPassword:=FALSE;
 END_IF
 
@@ -125,80 +142,107 @@ END_IF
 ]]></ST>
     </Implementation>
     <Method Name="getRobotIP" Id="{26a78548-d92c-4780-adfb-e7b25572327e}">
-      <Declaration><![CDATA[{attribute 'TcRpcEnable':='1'}
-METHOD getRobotIP : BOOL
+      <Declaration><![CDATA[//This method is called to ask the IP address of the robot to the robot server. Answer will be received by the function block itself. 
+{attribute 'TcRpcEnable':='1'}
+METHOD getRobotIP : BOOL //FALSE: Finished
 VAR_INPUT
-	
 END_VAR
-VAR_output
-	bDone : BOOL;
+VAR_OUTPUT
 END_VAR]]></Declaration>
       <Implementation>
         <ST><![CDATA[
 
-GVL_MobileManipulator.stMobileRobotObjectLD.bBusyLD := TRUE;
-GVL_MobileManipulator.bStartLD := TRUE;
+
+fbSocketLD.bStartWritingString := TRUE;
 GVL_MobileManipulator.statusWriteLD := 'getInfo RobotIP';
 bRequestStatus := FALSE; //don't allow requesting status this cycle in case they overlapped
 
 
+
 bCallingMethods := TRUE;
 
-bDone := FALSE; //indicates that the job of the function is finished
 
 
 
-getRobotIP := TRUE; //function returns true after execution]]></ST>
+
+getRobotIP := TRUE; //function returns false after execution]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="goToPoint" Id="{4225b413-5d12-43cf-be36-7dfed9df80af}">
+      <Declaration><![CDATA[{attribute 'TcRpcEnable':='1'}
+METHOD goToPoint : BOOL
+VAR_INPUT
+	x : INT;
+	y : INT;
+	theta : INT;
+	
+END_VAR
+VAR
+	temp : STRING;
+	temp1 : STRING;
+	temp2 : STRING;
+	temp3 : STRING;
+	
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+
+
+
+
+
+fbSocketLD.bStartWritingString := TRUE;
+
+temp := CONCAT(TO_STRING(x), ' ');
+temp1 := CONCAT(temp, TO_STRING(y));
+temp2 := CONCAT(temp1, ' ');
+temp3 := CONCAT(temp2, TO_STRING(theta));
+
+GVL_MobileManipulator.statusWriteLD := CONCAT('gotoPoint ',temp3);
+bRequestStatus := FALSE; //don't allow requesting status this cycle in case they overlapped
+
+
+bCallingMethods := TRUE;
+
+
+goToPoint := TRUE; //function returns false after execution]]></ST>
       </Implementation>
     </Method>
     <Method Name="shutdown" Id="{9a75acf4-8ad8-45e2-8a57-a40dffd414a1}">
-      <Declaration><![CDATA[{attribute 'TcRpcEnable':='1'}
+      <Declaration><![CDATA[//This method is called to give the shutdown command to the mobile robot. 
+{attribute 'TcRpcEnable':='1'}
 METHOD shutdown : BOOL
 VAR_INPUT
 END_VAR
-
 VAR_OUTPUT
-	bDone: BOOL;
 END_VAR]]></Declaration>
       <Implementation>
-        <ST><![CDATA[GVL_MobileManipulator.stMobileRobotObjectLD.bBusyLD := TRUE;
-GVL_MobileManipulator.bStartLD := TRUE;
+        <ST><![CDATA[
+fbSocketLD.bStartWritingString := TRUE;
 GVL_MobileManipulator.statusWriteLD := 'shutdown';
 bRequestStatus := FALSE; //don't allow requesting status this cycle in case they overlapped
 bCallingMethods := TRUE;
 
-bDone := FALSE; //indicates that the job of the function is finished
 
-shutdown := TRUE; //function returns true after execution]]></ST>
+shutdown := FALSE; //function returns false after execution]]></ST>
       </Implementation>
     </Method>
     <LineIds Name="FB_HandleRobotLD">
-      <LineId Id="286" Count="1" />
-      <LineId Id="299" Count="0" />
-      <LineId Id="338" Count="0" />
-      <LineId Id="370" Count="0" />
-      <LineId Id="339" Count="2" />
-      <LineId Id="288" Count="3" />
-      <LineId Id="225" Count="0" />
-      <LineId Id="374" Count="0" />
-      <LineId Id="226" Count="1" />
-      <LineId Id="375" Count="0" />
-      <LineId Id="228" Count="3" />
-      <LineId Id="233" Count="24" />
-      <LineId Id="283" Count="2" />
-      <LineId Id="259" Count="0" />
-      <LineId Id="418" Count="1" />
-      <LineId Id="421" Count="1" />
-      <LineId Id="417" Count="0" />
-      <LineId Id="260" Count="6" />
-      <LineId Id="268" Count="0" />
-      <LineId Id="420" Count="0" />
-      <LineId Id="269" Count="13" />
+      <LineId Id="477" Count="6" />
+      <LineId Id="607" Count="0" />
+      <LineId Id="611" Count="0" />
+      <LineId Id="618" Count="2" />
+      <LineId Id="614" Count="0" />
+      <LineId Id="608" Count="0" />
+      <LineId Id="485" Count="67" />
       <LineId Id="152" Count="0" />
     </LineIds>
     <LineIds Name="FB_HandleRobotLD.getRobotIP">
       <LineId Id="7" Count="0" />
-      <LineId Id="9" Count="3" />
+      <LineId Id="50" Count="0" />
+      <LineId Id="10" Count="2" />
+      <LineId Id="51" Count="0" />
       <LineId Id="14" Count="0" />
       <LineId Id="31" Count="1" />
       <LineId Id="19" Count="0" />
@@ -207,11 +251,25 @@ shutdown := TRUE; //function returns true after execution]]></ST>
       <LineId Id="37" Count="2" />
       <LineId Id="5" Count="0" />
     </LineIds>
+    <LineIds Name="FB_HandleRobotLD.goToPoint">
+      <LineId Id="52" Count="1" />
+      <LineId Id="55" Count="0" />
+      <LineId Id="54" Count="0" />
+      <LineId Id="7" Count="2" />
+      <LineId Id="29" Count="1" />
+      <LineId Id="32" Count="0" />
+      <LineId Id="31" Count="0" />
+      <LineId Id="36" Count="0" />
+      <LineId Id="28" Count="0" />
+      <LineId Id="10" Count="0" />
+      <LineId Id="12" Count="0" />
+      <LineId Id="15" Count="4" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
     <LineIds Name="FB_HandleRobotLD.shutdown">
       <LineId Id="6" Count="2" />
       <LineId Id="5" Count="0" />
       <LineId Id="9" Count="0" />
-      <LineId Id="12" Count="0" />
       <LineId Id="11" Count="0" />
       <LineId Id="13" Count="0" />
       <LineId Id="10" Count="0" />

@@ -1,19 +1,22 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.11">
   <POU Name="FB_HandleSetTM" Id="{6d8cf4ea-1acf-46ca-b535-92c6f38dbe51}" SpecialFunc="None">
-    <Declaration><![CDATA[FUNCTION_BLOCK FB_HandleSetTM
+    <Declaration><![CDATA[(*This function block (FB) is resposible for handling the set method calls. It provides the following void methods; 
+buttonPlayPause, buttonStickMinus, buttonStickPlus, buttonStop, changeProjectSpeed, moveRelativePTP, setJointsPTP. *)
+FUNCTION_BLOCK FB_HandleSetTM
 VAR_INPUT
 END_VAR
 VAR_OUTPUT
 END_VAR
 VAR
-	i : INT;
 	//stRobotArmObjectTM : ST_RobotArmObjectTM;
 	
 	//Initialize function block
+	{attribute 'OPC.UA.DA':='0'}
 	fbModbusWriteTM : FB_ModbusWriteTM;
 	
 	//reference object from command window
+	{attribute 'OPC.UA.DA':='0'}
 	stRobotArmReferenceTM : ST_RobotArmObjectTM;
 END_VAR
 ]]></Declaration>
@@ -37,9 +40,7 @@ IF GVL_CommandWindow.bCmdMoveRelPTP OR GVL_CommandWindow.bCmdMoveRelLinear THEN
 	stRobotArmReferenceTM.fRX := GVL_CommandWindow.fRX_Ref;
 	stRobotArmReferenceTM.fRY := GVL_CommandWindow.fRY_Ref;
 	stRobotArmReferenceTM.fRZ := GVL_CommandWindow.fRZ_Ref;
-	FOR i:= 1 TO 2 DO
-		fbModbusWriteTM(stReferenceTM := stRobotArmReferenceTM);
-	END_FOR
+	fbModbusWriteTM(stReferenceTM := stRobotArmReferenceTM);
 END_IF
 
 IF GVL_CommandWindow.bCmdSetJointsPTP THEN
@@ -66,9 +67,10 @@ END_IF
 
 ]]></ST>
     </Implementation>
-    <Method Name="buttonPlayPause" Id="{0fedbe4b-817f-49bd-bcf7-b0a7ac625d6d}">
-      <Declaration><![CDATA[{attribute 'TcRpcEnable':='1'}
-METHOD buttonPlayPause : BOOL
+    <Method Name="buttonPlayPause" Id="{0b1d57f9-a4b5-44da-b5b5-20ff9edd9e1a}">
+      <Declaration><![CDATA[// Press the Play/Pause button of the robot stick
+{attribute 'TcRpcEnable':='1'}
+METHOD buttonPlayPause : BOOL // FALSE: finished
 VAR_INPUT
 END_VAR
 ]]></Declaration>
@@ -78,9 +80,10 @@ END_VAR
 buttonPlayPause := FALSE;  //indicates that the job of the function is finished]]></ST>
       </Implementation>
     </Method>
-    <Method Name="buttonStickMinus" Id="{627e8ccf-c2b5-417c-b2da-31683aa34a91}">
-      <Declaration><![CDATA[{attribute 'TcRpcEnable':='1'}
-METHOD buttonStickMinus : BOOL
+    <Method Name="buttonStickMinus" Id="{629aaa79-b467-4617-a0d7-2104da3bed0d}">
+      <Declaration><![CDATA[// Press the Minus(-) button of the robot stick 
+{attribute 'TcRpcEnable':='1'}
+METHOD buttonStickMinus : BOOL // FALSE: finished
 VAR_INPUT
 END_VAR
 ]]></Declaration>
@@ -91,9 +94,10 @@ fbModbusWriteTM.writeSingleCoil(nMBAddr5 := 16#1BC3); //starting modbus client w
 buttonStickMinus := FALSE;  //indicates that the job of the function is finished]]></ST>
       </Implementation>
     </Method>
-    <Method Name="buttonStickPlus" Id="{46972a74-bd48-4ddf-adb9-be2a88cf47a9}">
-      <Declaration><![CDATA[{attribute 'TcRpcEnable':='1'}
-METHOD buttonStickPlus : BOOL
+    <Method Name="buttonStickPlus" Id="{ccad1382-771e-438e-a5ba-0fa6fb7df5c8}">
+      <Declaration><![CDATA[// Press the Plus(+) button of the robot stick
+{attribute 'TcRpcEnable':='1'}
+METHOD buttonStickPlus : BOOL // FALSE: finished
 VAR_INPUT
 END_VAR
 ]]></Declaration>
@@ -104,9 +108,10 @@ fbModbusWriteTM.writeSingleCoil(nMBAddr5 := 16#1BC2); //starting modbus client w
 buttonStickPlus := FALSE;  //indicates that the job of the function is finished]]></ST>
       </Implementation>
     </Method>
-    <Method Name="buttonStop" Id="{4e0cff95-923f-496e-b0e3-f244047f9ca3}">
-      <Declaration><![CDATA[{attribute 'TcRpcEnable':='1'}
-METHOD buttonStop : BOOL
+    <Method Name="buttonStop" Id="{87a8389f-2227-49a5-98c8-0ace10da4a71}">
+      <Declaration><![CDATA[// Press the Stop button of the robot stick
+{attribute 'TcRpcEnable':='1'}
+METHOD buttonStop : BOOL // FALSE: finished
 VAR_INPUT
 END_VAR
 ]]></Declaration>
@@ -118,11 +123,12 @@ fbModbusWriteTM.writeSingleCoil(nMBAddr5 := 16#1BC1); //starting modbus client w
 buttonStop := FALSE; //indicates that the job of the function is finished]]></ST>
       </Implementation>
     </Method>
-    <Method Name="changeProjectSpeed" Id="{d41e2b6e-6959-4a9e-9589-66782e19b713}">
-      <Declaration><![CDATA[{attribute 'TcRpcEnable':='1'}
-METHOD changeProjectSpeed : BOOL
+    <Method Name="changeProjectSpeed" Id="{e0973733-aa90-49c8-b87e-f3a4990b0108}">
+      <Declaration><![CDATA[// Change the project in range 0% to 100%
+{attribute 'TcRpcEnable':='1'}
+METHOD changeProjectSpeed : INT // FALSE: finished
 VAR_INPUT
-	projectSpeed : INT;
+	projectSpeed : INT; //Project speed (multiples of 5)
 END_VAR
 VAR
 	nValueInt : WORD;
@@ -142,19 +148,20 @@ nValueInt := INT_TO_WORD(projectSpeed);
 
 fbModbusWriteTM.writeSingleRegister(nMBAddr6 := 16#1BBD,nValue6 := nValueInt); //starting modbus client with address 7101 (Change Project Speed)
 
-changeProjectSpeed := FALSE;  //indicates that the job of the function is finished]]></ST>
+changeProjectSpeed := 2;  //indicates that the job of the function is finished]]></ST>
       </Implementation>
     </Method>
-    <Method Name="moveRelativePTP" Id="{e2a554b0-9f24-461f-9c7f-794ba012d46f}">
-      <Declaration><![CDATA[{attribute 'TcRpcEnable':='1'}
-METHOD moveRelativePTP : BOOL
+    <Method Name="moveRelativePTP" Id="{ce9a3435-a40a-4dd1-b1c9-e59b41424958}">
+      <Declaration><![CDATA[//Move the robot point-to-point(PTP) in relative cartesian coordinate frame
+{attribute 'TcRpcEnable':='1'}
+METHOD moveRelativePTP : BOOL // FALSE: finished
 VAR_INPUT
-	fX : REAL := 0; 
-	fY : REAL := 0; 
-	fZ : REAL := 0; 
-	fRX : REAL := 0; 
-	fRY : REAL := 0; 
-	fRZ : REAL := 0; 
+	fX : REAL := 0; // Translation in the x-axis
+	fY : REAL := 0; // Translation in the y-axis
+	fZ : REAL := 0; // Translation in the z-axis
+	fRX : REAL := 0; // Rotation in the x-axis
+	fRY : REAL := 0; // Rotation in the y-axis
+	fRZ : REAL := 0; // Rotation in the z-axis
 END_VAR
 VAR
 	stRobotArmRefTM : ST_RobotArmObjectTM;
@@ -171,19 +178,20 @@ stRobotArmRefTM.fRZ := fRZ;
 
 fbModbusWriteTM(stReferenceTM := stRobotArmRefTM); //start Modbus TCP Client 
 
-moveRelativePTP := FALSE;  //indicates that the job of the function is finishedon]]></ST>
+moveRelativePTP := FALSE;  //indicates that the job of the function is finished]]></ST>
       </Implementation>
     </Method>
-    <Method Name="setJointsPTP" Id="{32648ada-ec4b-420a-8735-46fe963d6e5e}">
-      <Declaration><![CDATA[{attribute 'TcRpcEnable':='1'}
-METHOD setJointsPTP : BOOL
+    <Method Name="setJointsPTP" Id="{86b01414-8c9d-4d34-80ad-9ec44c360771}">
+      <Declaration><![CDATA[// Move the robot joints point-to-point(PTP)
+{attribute 'TcRpcEnable':='1'}
+METHOD setJointsPTP : BOOL // FALSE: finished
 VAR_INPUT
-	fTheta1 : REAL := 0;
-	fTheta2 : REAL := 0;
-	fTheta3 : REAL := 0;
-	fTheta4 : REAL := 0;
-	fTheta5 : REAL := 0;
-	fTheta6 : REAL := 0;
+	fTheta1 : REAL := 0; // Joint 1
+	fTheta2 : REAL := 0; // Joint 2
+	fTheta3 : REAL := 0; // Joint 3
+	fTheta4 : REAL := 0; // Joint 4
+	fTheta5 : REAL := 0; // Joint 5 
+	fTheta6 : REAL := 0; // Joint 6
 END_VAR
 VAR
 	stRobotArmRefTM : ST_RobotArmObjectTM;
@@ -216,9 +224,7 @@ setJointsPTP := FALSE;  //indicates that the job of the function is finished]]><
       <LineId Id="55" Count="3" />
       <LineId Id="60" Count="1" />
       <LineId Id="59" Count="0" />
-      <LineId Id="130" Count="0" />
       <LineId Id="135" Count="0" />
-      <LineId Id="134" Count="0" />
       <LineId Id="39" Count="0" />
       <LineId Id="63" Count="0" />
       <LineId Id="62" Count="0" />

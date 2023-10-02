@@ -1,9 +1,10 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.11">
   <POU Name="FB_ModbusWriteTM" Id="{8cc2f5f6-f87d-4261-8dd2-091085de715f}" SpecialFunc="None">
-    <Declaration><![CDATA[FUNCTION_BLOCK FB_ModbusWriteTM
+    <Declaration><![CDATA[//This function block calls the Modbus Write functions with given parameters. It writes the received values into the respecting memory locations. 
+FUNCTION_BLOCK FB_ModbusWriteTM
 VAR_INPUT
-	stReferenceTM : ST_RobotArmObjectTM;
+	stReferenceTM : ST_RobotArmObjectTM; // Manipulator object with cartesian and joint positions, and command ID to be written
 END_VAR
 VAR_OUTPUT
 END_VAR
@@ -36,7 +37,8 @@ VAR
 	nTCPPort			: UINT := GCL_ModbusTcp.cTCPPort;
 	nUnitID				: BYTE := GCL_ModbusTcp.cUnitID;
 
-	
+	kaan : INT;
+	kState : E_RobotStateTM;
 END_VAR
 ]]></Declaration>
     <Implementation>
@@ -109,47 +111,109 @@ ELSE
 END_IF
 (*---------------END OF Prepare Data to be Sent---------------*)
 
+
 (*---------------Modbus function 6 - WriteSingleReg---------------*)
-FOR i:=1 TO 2 DO
-	IF NOT bstart6 THEN	
-		bStart6 := TRUE;
-		fbWrite6.bExecute := TRUE;
-	ELSE
-		IF NOT fbWrite6.bBUSY THEN
-			bStart6 := FALSE;
-		END_IF
-		fbWrite6.bExecute := FALSE;
-	END_IF
+bStart6 := TRUE;
+fbWrite6(bExecute := FALSE);
+WHILE bStart6 DO 
 	fbWrite6(sIPAddr:= sIPAddr, nTCPPort:= nTCPPort, nUnitID:= nUnitID, nMBAddr:= 16#23F0, nValue:=nValue6,
-			tTimeout:= T#1S, bBusy=>bBusy6, bError=> bError6, nErrId=> nErrId6 );
-	fbWrite6(bExecute:=FALSE);
-	bStart6 := FALSE;
-END_FOR
+		tTimeout:= T#1S, bExecute:= bStart6, bError=> bError6, nErrId=> nErrId6 );
+	IF NOT fbWrite6.bBusy THEN
+		bStart6 := FALSE; 
+	END_IF
+END_WHILE
+fbWrite6(bExecute := FALSE);
 (*---------------END OF Modbus function 6 - WriteSingleReg---------------*)
 	
+
 (*---------------Modbus function 16 - WriteRegs---------------*)
-FOR i:=1 TO 2 DO;
-	IF NOT bStart16 THEN
-		bStart16 := TRUE;
-		fbWrite16.bExecute := TRUE;
-	ELSE
-		IF NOT fbWrite16.bBusy THEN
-			bStart16 := FALSE;
-		END_IF
-		fbWrite16.bExecute := FALSE;
+bStart16 := TRUE;
+fbWrite16(bExecute := FALSE);
+WHILE bStart16 DO 
+	fbWrite16(sIPAddr:= sIPAddr, nTCPPort:= nTCPPort, nUnitID:= nUnitID, nQuantity:= nQuantity, nMBAddr:= nMBAddr16, cbLength:= SIZEOF(arrWriteCommands), 
+		pSrcAddr:= ADR(arrWriteCommands), bExecute:= bStart16 , tTimeout:= T#1S, bError=> bError16, nErrId=> nErrId16 );
+	IF NOT fbWrite16.bBusy THEN
+		bStart16 := FALSE; 
 	END_IF
+END_WHILE
+fbWrite16(bExecute := FALSE);
+(*---------------END OF Modbus function 16 - WriteRegs---------------*)
+
+
+
+
+
+
+
+
+//TRIAL 6 
+//FOR i:=1 TO 2 DO
+//	IF NOT bstart6 THEN	
+//		bStart6 := TRUE;
+//		fbWrite6.bExecute := TRUE;
+//	ELSE
+//		IF NOT fbWrite6.bBUSY THEN
+//			bStart6 := FALSE;
+//		END_IF
+//		fbWrite6.bExecute := FALSE;
+//	END_IF
+//	fbWrite6(sIPAddr:= sIPAddr, nTCPPort:= nTCPPort, nUnitID:= nUnitID, nMBAddr:= 16#23F0, nValue:=nValue6,
+//			tTimeout:= T#1S, bBusy=>bBusy6, bError=> bError6, nErrId=> nErrId6 );
+//	fbWrite6(bExecute:=FALSE);
+//	bStart6 := FALSE;
+//END_FOR
+
+
+//TRIAL 16 
+//FOR i:=1 TO 2 DO;
+//	IF NOT bStart16 THEN
+//		bStart16 := TRUE;
+//		fbWrite16.bExecute := TRUE;
+//	ELSE
+//		IF NOT fbWrite16.bBusy THEN
+//			bStart16 := FALSE;
+//		END_IF
+//		fbWrite16.bExecute := FALSE;
+//	END_IF
 	
-	fbWrite16(sIPAddr:= sIPAddr, nTCPPort:= nTCPPort, nUnitID:= nUnitID, nQuantity:= nQuantity, nMBAddr:= nMBAddr16, cbLength:= SIZEOF(arrWriteCommands) , 
-			pSrcAddr:= ADR(arrWriteCommands), bExecute:= bStart16 , tTimeout:= T#1S, bBusy=>bBusy16, bError=> bError16, nErrId=> nErrId16 );
-	fbWrite16(bExecute := FALSE);
-	bStart16 := FALSE;
-END_FOR
-(*---------------END OF Modbus function 16 - WriteRegs---------------*)]]></ST>
+//	fbWrite16(sIPAddr:= sIPAddr, nTCPPort:= nTCPPort, nUnitID:= nUnitID, nQuantity:= nQuantity, nMBAddr:= nMBAddr16, cbLength:= SIZEOF(arrWriteCommands) , 
+//			pSrcAddr:= ADR(arrWriteCommands), bExecute:= bStart16 , tTimeout:= T#1S, bBusy=>bBusy16, bError=> bError16, nErrId=> nErrId16 );
+//	fbWrite16(bExecute := FALSE);
+//	bStart16 := FALSE;
+//END_FOR
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+]]></ST>
     </Implementation>
     <Method Name="writeSingleCoil" Id="{61bf8526-5a01-46aa-ade2-2934f012d399}">
-      <Declaration><![CDATA[METHOD writeSingleCoil : BOOL
+      <Declaration><![CDATA[//This method is called to trigger single coil inputs of the manipulator 
+METHOD writeSingleCoil : BOOL
 VAR_INPUT
-	nMBAddr5			: WORD;
+	nMBAddr5			: WORD; //Modbus address to write single coil (FC: 5)
 END_VAR
 VAR
 	i: INT;
@@ -187,10 +251,11 @@ END_FOR
       </Implementation>
     </Method>
     <Method Name="writeSingleRegister" Id="{7ac5983f-1932-46f0-a8e3-cab9423ee513}">
-      <Declaration><![CDATA[METHOD writeSingleRegister : BOOL
+      <Declaration><![CDATA[//This method is called to trigger single coil inputs of the manipulator 
+METHOD writeSingleRegister : BOOL
 VAR_INPUT
-	nMBAddr6 : WORD;
-	nValue6	 : WORD;
+	nMBAddr6 : WORD; //Modbus address to write single register (FC: 6)
+	nValue6	 : WORD; // Value of the register to be written
 END_VAR
 VAR
 	i : INT;
@@ -222,15 +287,31 @@ END_FOR
     </Method>
     <LineIds Name="FB_ModbusWriteTM">
       <LineId Id="479" Count="1" />
-      <LineId Id="351" Count="67" />
-      <LineId Id="481" Count="0" />
-      <LineId Id="419" Count="12" />
-      <LineId Id="482" Count="0" />
-      <LineId Id="432" Count="3" />
-      <LineId Id="483" Count="0" />
-      <LineId Id="436" Count="12" />
-      <LineId Id="485" Count="0" />
+      <LineId Id="351" Count="65" />
+      <LineId Id="871" Count="0" />
+      <LineId Id="417" Count="1" />
+      <LineId Id="780" Count="2" />
+      <LineId Id="784" Count="1" />
+      <LineId Id="787" Count="3" />
+      <LineId Id="779" Count="0" />
+      <LineId Id="432" Count="1" />
+      <LineId Id="870" Count="0" />
+      <LineId Id="434" Count="0" />
+      <LineId Id="792" Count="8" />
+      <LineId Id="791" Count="0" />
       <LineId Id="54" Count="0" />
+      <LineId Id="863" Count="6" />
+      <LineId Id="525" Count="1" />
+      <LineId Id="849" Count="13" />
+      <LineId Id="646" Count="0" />
+      <LineId Id="547" Count="0" />
+      <LineId Id="623" Count="1" />
+      <LineId Id="834" Count="14" />
+      <LineId Id="645" Count="0" />
+      <LineId Id="811" Count="1" />
+      <LineId Id="551" Count="17" />
+      <LineId Id="528" Count="5" />
+      <LineId Id="524" Count="0" />
     </LineIds>
     <LineIds Name="FB_ModbusWriteTM.writeSingleCoil">
       <LineId Id="7" Count="0" />

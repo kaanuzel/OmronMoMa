@@ -11,9 +11,6 @@ VAR_GLOBAL
 	bStopTM		: BOOL;
 	
 	
-	bCmdMoveRelPTP : BOOL;
-	bCmdSetJointsPTP : BOOL;
-	
 	{attribute 'OPC.UA.DA' := '1'}
 	stRobotArmObjectTM : ST_RobotArmObjectTM;
 	
@@ -27,7 +24,6 @@ VAR_GLOBAL
 	bStartLD 	: BOOL;
 	{attribute 'OPC.UA.DA' := '1'}
 	bStopLD		: BOOL;
-	
 	statusReceivedLD 	: STRING(7680):= '';
 	statusWriteLD 		: T_MaxString; 
 	

@@ -4,7 +4,8 @@
     <Declaration><![CDATA[{attribute 'qualified_only'}
 VAR_GLOBAL CONSTANT
 	sSrvNetID		: T_AmsNetID	:= '';(* TwinCAT TCP/IP server network address *)
-	sRemoteHost 	: T_IPv4Addr := '1.2.3.4';
+	//sRemoteHost 	: T_IPv4Addr := '1.2.3.4';
+	sRemoteHost 	: T_IPv4Addr := '192.168.0.32';
 	nRemotePort 	: UDINT:=7171;
 END_VAR]]></Declaration>
   </GVL>
