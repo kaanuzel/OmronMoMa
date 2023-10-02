@@ -1,0 +1,12 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.11">
+  <GVL Name="GCL_TcpIp" Id="{717975ed-a121-479e-b74f-71f5e0306284}">
+    <Declaration><![CDATA[{attribute 'qualified_only'}
+VAR_GLOBAL CONSTANT
+	sSrvNetID		: T_AmsNetID	:= '';(* TwinCAT TCP/IP server network address *)
+	//sRemoteHost 	: T_IPv4Addr := '1.2.3.4';
+	sRemoteHost 	: T_IPv4Addr := '192.168.0.32';
+	nRemotePort 	: UDINT:=7171;
+END_VAR]]></Declaration>
+  </GVL>
+</TcPlcObject>

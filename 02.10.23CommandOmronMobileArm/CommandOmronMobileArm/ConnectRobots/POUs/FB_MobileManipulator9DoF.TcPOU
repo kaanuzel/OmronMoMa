@@ -1,0 +1,190 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.11">
+  <POU Name="FB_MobileManipulator9DoF" Id="{e63c4280-8055-42c9-a78f-c5c2c7d41f3e}" SpecialFunc="None">
+    <Declaration><![CDATA[(*This function block (FB) initializes the state machine for the control of the mobile manipulator (MoMa). 
+In addition, external method calls is provided for the user in this FB. The information on both robots are obtained in this FB, 
+and attributed as OPCUA variables for client access.*)
+FUNCTION_BLOCK FB_MobileManipulator9DoF
+VAR_INPUT
+END_VAR
+VAR_OUTPUT
+	bError          : BOOL := FALSE;        // TRUE if an error occurred.
+	
+	nErrorID 		: UDINT := 0; 
+	
+	
+//    hrErrorCode     : HRESULT;     // '< 0' = error; '> 0' = info; '0' = no error/info
+//    ipErrorMessage  : I_TcMessage := fbErrorMessage; // shows detailed information about occurred errors, warnings and more
+END_VAR
+VAR
+	
+//	// ERROR CODE 
+//	{attribute 'conditionalshow'}
+//    fbErrorMessage  : FB_TcMessage;
+	
+	
+	//Initializing FB objects for LD-90 and TM5-700
+	{attribute 'OPC.UA.DA':='1'}
+	fbHandleRobotLD : FB_HandleRobotLD;
+	{attribute 'OPC.UA.DA':='1'}
+	fbHandleSetTM : FB_HandleSetTM;
+	fbHandleGetTM : FB_HandleGetTM;
+//	fbSetRobotTM 				: FB_SetRobotTM;	
+//	fbReadRobotTM 			: FB_ReadRobotTM;
+	
+	
+	// Variables to call LD class functions 
+	{attribute 'OPC.UA.DA' := '1'}
+    bLDgetRobotIP : BOOL;
+	{attribute 'OPC.UA.DA' := '1'}
+	sRobotIP : STRING;
+	stLDmobileRobotObject : ST_MobileRobotObjectLD;
+	
+
+	
+	//State Machine Variables 
+	eState1 : E_MoMa_1stHierarchy_States;
+	eState2 : E_Moma_2ndHierarchy_Implementation;
+	
+	{attribute 'OPC.UA.DA' := '1'}
+	sTask : STRING; //Task to be entered by the user/client
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[(*--------------- Calling LD-90 handler & methods ---------------*)
+//handler
+fbHandleRobotLD();
+
+//status 
+stLDmobileRobotObject := GVL_MobileManipulator.stMobileRobotObjectLD;
+
+//method: getRobotIP 
+//IF bLDgetRobotIP THEN
+//	bLDgetRobotIP := fbHandleRobotLD.getRobotIP(); 
+//	sRobotIP := fbHandleRobotLD.sGetRobotIP;
+//END_IF	
+
+
+
+(*--------------- END OF Calling LD-90 handler & methods ---------------*)
+
+
+
+(*--------------- Calling TM5-700 handler & methods ---------------*)
+//set handler
+fbHandleSetTM();
+
+//get handler
+fbHandleGetTM();
+(*--------------- END OF Calling TM5-700 handler & methods ---------------*)
+
+
+
+
+(*--------------- TO DO: Task Separator for Robots to NOT Move Simultaniously ---------------*)
+	
+CASE eState1 OF
+	Init:
+		IF GVL_MobileManipulator.stMobileRobotObjectLD.bErrorLD OR GVL_MobileManipulator.stRobotArmObjectTM.bErrorTM THEN
+			eState1 := Init;	
+		ELSE
+			eState1 := IdleState;
+		END_IF
+	IdleState:
+	
+		//IF UserIsConnected
+		eState1 := UserInteraction;
+		
+	UserInteraction: 
+		
+		//When Received Tasks
+		IF sTask <> '' THEN
+			eState1 := Prepare; 
+		END_IF
+		
+	Prepare: 
+		//prepare queue for the task 
+		IF GVL_MobileManipulator.bStartTM THEN
+			eState1 := Implementation;
+		ELSIF GVL_MobileManipulator.bStartLD THEN
+			eState1 := Implementation;
+		ELSE 
+			eState1 := UserInteraction;
+		END_IF
+		
+		//IF tasks are finished then
+		//eState1 := Clear;
+		
+	Implementation:
+		CASE estate2 OF 
+			MovingTM:
+				GVL_MobileManipulator.bStopLD := TRUE; 
+				//do what task requires
+	
+			MovingLD:
+				// move TM into embryo position 
+				GVL_MobileManipulator.bStopTM := TRUE; 
+				//do what task requires 
+		END_CASE
+	
+	Clear:
+		sTask := '';
+		
+
+	ServiceNeeded:
+		GVL_MobileManipulator.bStopTM := TRUE;
+		GVL_MobileManipulator.bStopLD := TRUE;
+END_CASE
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+]]></ST>
+    </Implementation>
+    <LineIds Name="FB_MobileManipulator9DoF">
+      <LineId Id="1423" Count="5" />
+      <LineId Id="1797" Count="7" />
+      <LineId Id="1440" Count="10" />
+      <LineId Id="1478" Count="10" />
+      <LineId Id="1607" Count="1" />
+      <LineId Id="1489" Count="0" />
+      <LineId Id="1549" Count="0" />
+      <LineId Id="1664" Count="1" />
+      <LineId Id="1550" Count="1" />
+      <LineId Id="1662" Count="0" />
+      <LineId Id="1668" Count="0" />
+      <LineId Id="1670" Count="0" />
+      <LineId Id="1683" Count="0" />
+      <LineId Id="1685" Count="0" />
+      <LineId Id="1684" Count="0" />
+      <LineId Id="1663" Count="0" />
+      <LineId Id="1490" Count="5" />
+      <LineId Id="1848" Count="1" />
+      <LineId Id="1496" Count="3" />
+      <LineId Id="1741" Count="0" />
+      <LineId Id="1500" Count="1" />
+      <LineId Id="1542" Count="6" />
+      <LineId Id="1540" Count="1" />
+      <LineId Id="1509" Count="0" />
+      <LineId Id="1515" Count="0" />
+      <LineId Id="1552" Count="0" />
+      <LineId Id="1555" Count="0" />
+      <LineId Id="1516" Count="22" />
+      <LineId Id="29" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>
